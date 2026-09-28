@@ -43,6 +43,15 @@
     </section>
     {% endif %}
 
+    {% if for_you %}
+    <section>
+      <div class="section-title"><h2>✨ پیشنهاد برای شما</h2><a href="{% url 'magazine:for_you' %}" class="text-sm text-brand-600 font-normal">بیشتر ←</a></div>
+      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {% for article in for_you %}{% include "partials/article_card.html" %}{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     {% banner_slot "home_middle" %}
 
     {% for category, items in category_sections %}

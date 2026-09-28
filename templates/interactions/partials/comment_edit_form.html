@@ -1,0 +1,10 @@
+<div id="comment-{{ comment.pk }}">
+  <form hx-post="{% url 'interactions:edit_comment' comment.pk %}" hx-target="#comment-{{ comment.pk }}" hx-swap="outerHTML" class="form-field space-y-2">
+    {{ form.body }}
+    {{ form.body.errors }}
+    <div class="flex gap-2">
+      <button class="btn-primary">ذخیره</button>
+      <button type="button" class="btn-ghost" onclick="location.reload()">انصراف</button>
+    </div>
+  </form>
+</div>

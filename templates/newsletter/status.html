@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}خبرنامه | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md card p-8 text-center">
+  {% if state == "confirmed" %}
+    <p class="text-4xl">🎉</p><h1 class="text-xl font-bold mt-3">عضویت شما تأیید شد</h1>
+    <p class="mt-2 text-slate-500 text-sm">از این پس AI Daily و خلاصه هفتگی به {{ subscriber.email }} ارسال می‌شود.</p>
+  {% elif state == "sent" %}
+    <p class="text-4xl">✉️</p><h1 class="text-xl font-bold mt-3">ایمیل تأیید ارسال شد</h1>
+    <p class="mt-2 text-slate-500 text-sm">لینک داخل ایمیل را باز کنید تا عضویت کامل شود.</p>
+  {% elif state == "confirm_unsubscribe" %}
+    <h1 class="text-xl font-bold">لغو اشتراک خبرنامه</h1>
+    <p class="mt-2 text-slate-500 text-sm">دیگر ایمیلی به {{ subscriber.email }} ارسال نشود؟</p>
+    <form method="post" class="mt-6">{% csrf_token %}<button class="btn-primary">بله، لغو اشتراک</button></form>
+  {% elif state == "unsubscribed" %}
+    <h1 class="text-xl font-bold">اشتراک شما لغو شد</h1>
+    <p class="mt-2 text-slate-500 text-sm">هر زمان خواستید می‌توانید دوباره عضو شوید.</p>
+  {% else %}
+    <h1 class="text-xl font-bold">ایمیل نامعتبر است</h1>
+  {% endif %}
+  <a href="{% url 'magazine:home' %}" class="btn-ghost mt-6">بازگشت به صفحه اصلی</a>
+</div>
+{% endblock %}

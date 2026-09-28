@@ -78,3 +78,52 @@ class Banner(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class SiteSettings(models.Model):
+    """Singleton with site-wide settings editable from the admin panel."""
+
+    site_name = models.CharField("نام سایت", max_length=100, blank=True,
+                                 help_text="خالی = مقدار پیش‌فرض از تنظیمات سرور")
+    site_description = models.CharField("توضیحات سایت (SEO)", max_length=300, blank=True)
+    default_og_image = models.ImageField("تصویر پیش‌فرض اشتراک‌گذاری (OG)", upload_to="site/", blank=True)
+    contact_email = models.EmailField("ایمیل تماس", blank=True)
+    telegram_url = models.URLField("تلگرام", blank=True)
+    twitter_url = models.URLField("ایکس (توییتر)", blank=True)
+    linkedin_url = models.URLField("لینکدین", blank=True)
+    github_url = models.URLField("گیت‌هاب", blank=True)
+    head_scripts = models.TextField(
+        "کدهای head (آنالیتیکس)", blank=True,
+        help_text="فقط کد مورد اعتماد وارد کنید؛ بدون تغییر در head همه صفحات قرار می‌گیرد.",
+    )
+    comments_require_approval = models.BooleanField("دیدگاه‌ها قبل از نمایش تأیید شوند", default=False)
+    banned_words = models.TextField("کلمات ممنوع در دیدگاه‌ها", blank=True, help_text="هر کلمه در یک خط")
+    ai_daily_auto_publish = models.BooleanField(
+        "انتشار خودکار AI Daily", default=False,
+        help_text="اگر خاموش باشد، AI Daily تولیدشده به‌صورت «در انتظار بررسی» ذخیره می‌شود.",
+    )
+
+    class Meta:
+        verbose_name = "تنظیمات سایت"
+        verbose_name_plural = "تنظیمات سایت"
+
+    def __str__(self):
+        return "تنظیمات سایت"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        from django.core.cache import cache
+
+        obj = cache.get("site_settings")
+        if obj is None:
+            obj, _ = cls.objects.get_or_create(pk=1)
+            cache.set("site_settings", obj, 3600)
+        return obj
+
+    @property
+    def banned_word_list(self):
+        return [w.strip().lower() for w in self.banned_words.splitlines() if w.strip()]

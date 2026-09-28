@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}پیشنهاد برای شما | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold mb-2">✨ پیشنهاد برای شما</h1>
+<p class="text-slate-500 mb-8">بر اساس مطالبی که خوانده‌اید، پسندیده‌اید، ذخیره کرده‌اید و موضوعاتی که دنبال می‌کنید.</p>
+{% if articles %}
+<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+  {% for article in articles %}{% include "partials/article_card.html" %}{% endfor %}
+</div>
+{% else %}
+<div class="card p-10 text-center text-slate-500">چند مطلب بخوانید یا موضوعی را دنبال کنید تا پیشنهادها شخصی شوند.</div>
+{% endif %}
+{% endblock %}

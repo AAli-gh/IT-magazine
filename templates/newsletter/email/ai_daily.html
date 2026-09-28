@@ -1,0 +1,10 @@
+{% extends "newsletter/email/base.html" %}
+{% block content %}
+<p style="color:#7c3aed;font-weight:700;margin:0" dir="ltr">🤖 AI Daily #{{ article.ai_daily_number }}</p>
+<h1 style="font-size:20px;margin:8px 0 16px">{{ article.title }}</h1>
+{% if article.excerpt %}<p>{{ article.excerpt }}</p>{% endif %}
+{% if article.why_important %}<p><b>چرا مهم است؟</b><br>{{ article.why_important|linebreaksbr }}</p>{% endif %}
+{% if article.use_cases %}<p><b>چه کاربردی دارد؟</b><br>{{ article.use_cases|linebreaksbr }}</p>{% endif %}
+{% if article.developer_impact %}<p><b>چه تأثیری روی توسعه‌دهندگان دارد؟</b><br>{{ article.developer_impact|linebreaksbr }}</p>{% endif %}
+<p><a href="{{ article_url }}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:12px;text-decoration:none">ادامه مطلب</a></p>
+{% endblock %}

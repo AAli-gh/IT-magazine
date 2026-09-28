@@ -11,6 +11,9 @@ class User(AbstractUser):
     website = models.URLField("وب‌سایت", blank=True)
     github = models.CharField("گیت‌هاب", max_length=100, blank=True)
     is_author = models.BooleanField("نویسنده", default=False)
+    email_notifications = models.BooleanField(
+        "ایمیل برای مطالب جدید موضوعات دنبال‌شده", default=True
+    )
 
     class Meta:
         verbose_name = "کاربر"

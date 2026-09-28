@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -20,6 +21,16 @@ def robots_txt(request):
         "Disallow: /admin/",
         "Disallow: /accounts/",
         "Disallow: /i/",
+        "Disallow: /admin-tools/",
+        "Disallow: /notifications/",
+        "Disallow: /newsletter/",
         f"Sitemap: {sitemap}",
     ]
     return HttpResponse("\n".join(lines) + "\n", content_type="text/plain")
+
+
+def healthz(request):
+    """Liveness/readiness probe for Docker and load balancers."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+    return HttpResponse("ok", content_type="text/plain")

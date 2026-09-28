@@ -8,13 +8,15 @@
       </span>
     </a>
 
-    <form action="{% url 'magazine:search' %}" method="get" role="search" class="hidden md:block flex-1 max-w-md mx-auto">
+    <form action="{% url 'magazine:search' %}" method="get" role="search" class="hidden md:block flex-1 max-w-md mx-auto relative" data-suggest>
       <label class="relative block">
         <span class="sr-only">جستجو</span>
-        <input type="search" name="q" value="{{ q|default:'' }}" placeholder="جستجو در مقالات، آموزش‌ها و اخبار..."
+        <input type="search" name="q" value="{{ q|default:'' }}" placeholder="جستجو در مقالات، آموزش‌ها و اخبار..." autocomplete="off"
+               hx-get="{% url 'magazine:search_suggest' %}" hx-trigger="input changed delay:250ms, focus" hx-target="#search-suggest"
                class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 pr-10 text-sm focus:ring-brand-500">
         <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
       </label>
+      <div id="search-suggest" class="absolute inset-x-0 top-full mt-2 z-50"></div>
     </form>
 
     <nav class="mr-auto flex items-center gap-1 text-sm">
@@ -31,11 +33,14 @@
       <a href="{% url 'magazine:search' %}" class="md:hidden btn-ghost" aria-label="جستجو">🔍</a>
       <button type="button" class="btn-ghost" data-theme-toggle aria-label="تغییر تم">🌓</button>
       {% if user.is_authenticated %}
-        <a href="{% url 'accounts:profile' %}" class="btn-ghost">👤 {{ user.display_name }}</a>
+        <a href="{% url 'newsletter:notifications' %}" class="btn-ghost relative" aria-label="اعلان‌ها">🔔
+          {% if unread_notifications %}<span class="absolute -top-1 -left-1 min-w-[1.25rem] h-5 px-1 grid place-items-center rounded-full bg-rose-600 text-white text-[11px]">{{ unread_notifications }}</span>{% endif %}
+        </a>
+        <a href="{% url 'accounts:profile' %}" class="btn-ghost">👤 <span class="hidden sm:inline">{{ user.display_name }}</span></a>
         {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="hidden sm:inline-flex btn-ghost">پنل</a>{% endif %}
       {% else %}
-        <a href="{% url 'accounts:login' %}" class="btn-ghost">ورود</a>
-        <a href="{% url 'accounts:signup' %}" class="hidden sm:inline-flex btn-primary">ثبت‌نام</a>
+        <a href="{% url 'account_login' %}" class="btn-ghost">ورود</a>
+        <a href="{% url 'account_signup' %}" class="hidden sm:inline-flex btn-primary">ثبت‌نام</a>
       {% endif %}
     </nav>
   </div>

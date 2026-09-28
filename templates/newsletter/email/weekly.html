@@ -1,0 +1,8 @@
+{% extends "newsletter/email/base.html" %}
+{% block content %}
+<h1 style="font-size:20px;margin:0 0 16px">مهم‌ترین مطالب این هفته</h1>
+{% for item in items %}
+<p style="margin:0 0 14px"><a href="{{ item.url }}" style="color:#1d4ed8;font-weight:700;text-decoration:none">{{ item.article.display_title }}</a><br>
+<span style="font-size:13px;color:#64748b">{{ item.article.category.name }}{% if item.article.excerpt %} — {{ item.article.excerpt|truncatechars:140 }}{% endif %}</span></p>
+{% endfor %}
+{% endblock %}

@@ -25,6 +25,14 @@
     });
   });
 
+  // Close the header search suggestions when clicking elsewhere / pressing Escape
+  const suggestForm = document.querySelector("[data-suggest]");
+  if (suggestForm) {
+    const box = suggestForm.querySelector("#search-suggest");
+    document.addEventListener("click", (e) => { if (!suggestForm.contains(e.target)) box.innerHTML = ""; });
+    suggestForm.addEventListener("keydown", (e) => { if (e.key === "Escape") box.innerHTML = ""; });
+  }
+
   // Reading progress bar
   const progress = document.getElementById("reading-progress");
   const body = document.querySelector("[data-article-body]");

@@ -12,7 +12,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.models import Page
-from magazine.models import Article, Category, Tag
+from accounts.roles import ensure_roles
+from magazine.models import Article, Category, InterviewQA, NewsSource, Tag
 
 # (slug, icon, name, description, show_on_home)
 CATEGORIES = [
@@ -36,6 +37,13 @@ PAGES = [
                           "ما هر روز مقاله، خبر، آموزش و تحلیل تازه از دنیای هوش مصنوعی، برنامه‌نویسی، "
                           "امنیت و فناوری منتشر می‌کنیم."),
     ("contact", "تماس با ما", "برای همکاری، پیشنهاد یا ارسال مطلب با ما در ارتباط باشید."),
+]
+
+# Starting feeds for automatic AI Daily drafts; edit them in the admin.
+NEWS_SOURCES = [
+    ("Hugging Face Blog", "https://huggingface.co/blog/feed.xml"),
+    ("Google AI Blog", "https://blog.google/technology/ai/rss/"),
+    ("arXiv cs.CL", "https://rss.arxiv.org/rss/cs.CL"),
 ]
 
 DEMO_BODY = """## مقدمه
@@ -84,6 +92,13 @@ DEMO_ARTICLES = [
     ("اصول رمزنگاری که هر برنامه‌نویس باید بداند", "security", "article", ["Security", "Cryptography"], False, False),
     ("بازار پردازنده‌های گرافیکی در سال جدید", "hardware", "news", ["GPU"], False, False),
     ("مدل جدید متن‌باز هوش مصنوعی معرفی شد", "ai", "ai_daily", ["AI", "LLM"], False, False),
+    ("گفت‌وگو با یک مهندس یادگیری ماشین درباره آینده LLMها", "ai", "interview", ["AI", "LLM", "Interview"], False, False),
+]
+
+DEMO_INTERVIEW = [
+    ("از کجا شروع کردید؟", "از برنامه‌نویسی پایتون شروع کردم و کم‌کم به یادگیری ماشین علاقه‌مند شدم."),
+    ("مهم‌ترین مهارت یک مهندس ML چیست؟", "درک عمیق داده. مدل خوب بدون داده تمیز معنا ندارد."),
+    ("توصیه شما به تازه‌کارها؟", "پروژه واقعی بسازید و کدتان را متن‌باز کنید."),
 ]
 
 
@@ -103,7 +118,11 @@ class Command(BaseCommand):
             )
         for order, (slug, title, body) in enumerate(PAGES):
             Page.objects.get_or_create(slug=slug, defaults={"title": title, "body": body, "order": order})
-        self.stdout.write(self.style.SUCCESS(f"{len(CATEGORIES)} categories and {len(PAGES)} pages ready."))
+        for name, url in NEWS_SOURCES:
+            NewsSource.objects.get_or_create(feed_url=url, defaults={"name": name})
+        ensure_roles()
+        self.stdout.write(self.style.SUCCESS(
+            f"{len(CATEGORIES)} categories, {len(PAGES)} pages, news sources and roles ready."))
 
         if demo:
             self._create_demo()
@@ -125,6 +144,8 @@ class Command(BaseCommand):
             if Article.objects.filter(title=title).exists():
                 continue
             extra = {}
+            if ctype == Article.ContentType.INTERVIEW:
+                extra = {"interviewee_name": "مریم احمدی", "interviewee_title": "مهندس ارشد یادگیری ماشین"}
             if ctype == Article.ContentType.AI_DAILY:
                 extra = {
                     "why_important": "مدل‌های متن‌باز رقابت را با مدل‌های تجاری نزدیک‌تر می‌کنند.",
@@ -145,5 +166,8 @@ class Command(BaseCommand):
                 **extra,
             )
             article.tags.set([Tag.objects.get_or_create(name=name)[0] for name in tag_names])
+            if ctype == Article.ContentType.INTERVIEW:
+                for order, (question, answer) in enumerate(DEMO_INTERVIEW):
+                    InterviewQA.objects.create(article=article, question=question, answer=answer, order=order)
             count += 1
         self.stdout.write(self.style.SUCCESS(f"{count} demo articles created."))

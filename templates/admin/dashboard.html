@@ -1,0 +1,93 @@
+{% extends "admin/index.html" %}
+{% load dashboard mag %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+  :root { --dash-bar: #2563eb; --dash-bar-hover: #1d4ed8; --dash-muted: var(--body-quiet-color, #64748b); --dash-card: var(--darkened-bg, #f8f8f8); }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) { --dash-bar: #60a5fa; --dash-bar-hover: #93c5fd; } }
+  html[data-theme="dark"] { --dash-bar: #60a5fa; --dash-bar-hover: #93c5fd; }
+  .dash { margin-bottom: 24px; }
+  .dash-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .dash-tile { background: var(--dash-card); border-radius: 10px; padding: 14px 16px; }
+  .dash-tile b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; color: var(--body-fg); }
+  .dash-tile span { font-size: 12px; color: var(--dash-muted); }
+  .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  @media (max-width: 1100px) { .dash-grid { grid-template-columns: 1fr; } }
+  .dash-card { background: var(--dash-card); border-radius: 10px; padding: 16px; min-width: 0; }
+  .dash-card h2 { margin: 0 0 12px; font-size: 14px; background: none; color: var(--body-fg); padding: 0; text-transform: none; letter-spacing: 0; }
+  .dash-chart { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--hairline-color, #e5e7eb); direction: ltr; }
+  .dash-bar { flex: 1; position: relative; height: 100%; display: flex; align-items: flex-end; }
+  .dash-bar i { display: block; width: 100%; background: var(--dash-bar); border-radius: 4px 4px 0 0; min-height: 1px; }
+  .dash-bar:hover i, .dash-bar:focus i { background: var(--dash-bar-hover); }
+  .dash-bar .tip { display: none; position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+    background: var(--body-fg); color: var(--body-bg); font-size: 11px; padding: 3px 7px; border-radius: 6px; z-index: 2; direction: rtl; }
+  .dash-bar:hover .tip, .dash-bar:focus .tip { display: block; }
+  .dash-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--dash-muted); margin-top: 4px; direction: ltr; }
+  .dash-list { list-style: none; margin: 0; padding: 0; }
+  .dash-list li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--hairline-color, #e5e7eb); list-style: none; }
+  .dash-list li span { color: var(--dash-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .dash details { margin-top: 8px; font-size: 12px; }
+  .dash table { width: 100%; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% dashboard_stats as stats %}
+<div class="dash">
+  <div class="dash-tiles">
+    {% for label, value in stats.tiles %}
+    <div class="dash-tile"><b>{{ value|fa_digits }}</b><span>{{ label }}</span></div>
+    {% endfor %}
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-card">
+      <h2>بازدید روزانه — ۱۴ روز اخیر (بیشینه: {{ stats.peak|fa_digits }})</h2>
+      <div class="dash-chart" role="img" aria-label="نمودار بازدید روزانه ۱۴ روز اخیر">
+        {% for point in stats.series %}
+        <div class="dash-bar" tabindex="0">
+          <i style="height: {{ point.pct }}%"></i>
+          <span class="tip">{{ point.date|jdate:"%d %B" }}: {{ point.views|fa_digits }} بازدید</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="dash-axis"><span>{{ stats.series.0.date|jdate:"%d %B" }}</span><span>امروز</span></div>
+      <details>
+        <summary>نمایش جدولی</summary>
+        <table>
+          <tr><th>تاریخ</th><th>بازدید</th></tr>
+          {% for point in stats.series %}<tr><td>{{ point.date|jdate }}</td><td>{{ point.views|fa_digits }}</td></tr>{% endfor %}
+        </table>
+      </details>
+    </div>
+
+    <div class="dash-card">
+      <h2>پربازدیدترین‌های هفته</h2>
+      <ul class="dash-list">
+        {% for row in stats.top %}
+        <li><a href="{% url 'magazine:article' row.article__slug %}" target="_blank">{{ row.article__title|truncatechars:48 }}</a><span>{{ row.total|fa_digits }}</span></li>
+        {% empty %}<li>هنوز بازدیدی ثبت نشده است.</li>{% endfor %}
+      </ul>
+    </div>
+
+    <div class="dash-card">
+      <h2>صف بررسی {% if stats.can_publish %}سردبیر{% else %}مطالب من{% endif %}</h2>
+      <ul class="dash-list">
+        {% for a in stats.review_queue %}
+        <li><a href="{% url 'admin:magazine_article_change' a.pk %}">{{ a.title|truncatechars:50 }}</a><span>{{ a.author|default:"-" }}</span></li>
+        {% empty %}<li>مطلبی در انتظار بررسی نیست.</li>{% endfor %}
+      </ul>
+    </div>
+
+    <div class="dash-card">
+      <h2>انتشار زمان‌بندی‌شده</h2>
+      <ul class="dash-list">
+        {% for a in stats.scheduled %}
+        <li><a href="{% url 'admin:magazine_article_change' a.pk %}">{{ a.title|truncatechars:40 }}</a><span>{{ a.published_at|jdate:"%d %B %H:%M" }}</span></li>
+        {% empty %}<li>موردی نیست.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{{ block.super }}
+{% endblock %}

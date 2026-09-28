@@ -1,6 +1,8 @@
 from django.contrib import admin
+from django.shortcuts import redirect
+from django.urls import reverse
 
-from .models import Banner, Page
+from .models import Banner, Page, SiteSettings
 
 
 @admin.register(Page)
@@ -21,3 +23,28 @@ class BannerAdmin(admin.ModelAdmin):
     list_filter = ("kind", "position", "is_active")
     list_editable = ("is_active", "order")
     search_fields = ("title", "text")
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ("هویت و SEO", {"fields": ("site_name", "site_description", "default_og_image")}),
+        ("شبکه‌های اجتماعی و تماس", {"fields": ("contact_email", "telegram_url", "twitter_url", "linkedin_url", "github_url")}),
+        ("دیدگاه‌ها", {"fields": ("comments_require_approval", "banned_words")}),
+        ("AI Daily", {"fields": ("ai_daily_auto_publish",)}),
+        ("پیشرفته", {"fields": ("head_scripts",), "classes": ("collapse",)}),
+    )
+
+    def has_add_permission(self, request):
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        obj = SiteSettings.load()
+        return redirect(reverse("admin:core_sitesettings_change", args=[obj.pk]))
+
+    def has_change_permission(self, request, obj=None):
+        # head_scripts is injected unescaped, so only superusers may edit settings.
+        return request.user.is_superuser

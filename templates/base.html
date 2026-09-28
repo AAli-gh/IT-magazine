@@ -13,6 +13,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ SITE_NAME }}">
   <meta property="og:description" content="{{ SITE_DESCRIPTION }}">
+  {% if site_settings.default_og_image %}<meta property="og:image" content="{{ SITE_URL }}{{ site_settings.default_og_image.url }}">{% endif %}
   {% endblock %}
   <link rel="alternate" type="application/rss+xml" title="{{ SITE_NAME }}" href="{% url 'rss' %}">
 
@@ -30,6 +31,7 @@
   <link rel="stylesheet" href="{% static 'css/code.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% block head %}{% endblock %}
+  {% if site_settings.head_scripts %}{{ site_settings.head_scripts|safe }}{% endif %}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
@@ -44,7 +46,7 @@
   {% endif %}
 
   <main class="mx-auto max-w-7xl px-4 py-6">
-    {% block content %}{% endblock %}
+    {% block main %}{% block content %}{% endblock %}{% endblock %}
   </main>
 
   {% include "partials/footer.html" %}

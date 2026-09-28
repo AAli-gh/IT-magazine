@@ -6,6 +6,7 @@
 <header class="rounded-2xl p-8 md:p-12 text-white bg-gradient-to-br from-violet-600 via-indigo-600 to-brand-600 mb-10">
   <h1 class="text-4xl font-black" dir="ltr">🤖 AI Daily</h1>
   <p class="mt-4 max-w-2xl leading-8 text-white/90">هر روز یک مقاله یا موضوع مهم از دنیای هوش مصنوعی — کوتاه، دقیق و کاربردی. در هر شماره سه سؤال را جواب می‌دهیم: <b>چرا مهم است؟</b> <b>چه کاربردی دارد؟</b> و <b>چه تأثیری روی توسعه‌دهندگان دارد؟</b></p>
+  <div class="mt-6 max-w-md">{% include "newsletter/partials/subscribe_form.html" %}</div>
 </header>
 {% if page_obj.object_list %}
 <ol class="space-y-4">

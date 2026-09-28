@@ -1,0 +1,15 @@
+<div class="newsletter-box">
+{% if done %}
+  <p class="text-sm font-medium">{% if confirmed %}✓ شما عضو خبرنامه هستید.{% else %}✉️ لینک تأیید به ایمیل شما ارسال شد.{% endif %}</p>
+{% else %}
+  <form hx-post="{% url 'newsletter:subscribe' %}" hx-target="closest .newsletter-box" hx-swap="outerHTML"
+        action="{% url 'newsletter:subscribe' %}" method="post" class="flex gap-2">
+    {% csrf_token %}
+    <input type="email" name="email" required placeholder="ایمیل شما" dir="ltr" aria-label="ایمیل"
+           class="flex-1 min-w-0 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm">
+    <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button class="btn bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 shrink-0">عضویت</button>
+  </form>
+  {% if form.errors %}<p class="text-xs mt-2 text-red-600">ایمیل معتبر وارد کنید.</p>{% endif %}
+{% endif %}
+</div>

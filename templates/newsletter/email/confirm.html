@@ -1,0 +1,6 @@
+{% extends "newsletter/email/base.html" %}
+{% block content %}
+<p>سلام! برای تأیید عضویت در خبرنامه روی دکمه زیر بزنید:</p>
+<p><a href="{{ confirm_url }}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:12px;text-decoration:none">تأیید عضویت</a></p>
+<p style="font-size:13px;color:#64748b">اگر شما درخواست نداده‌اید، این ایمیل را نادیده بگیرید.</p>
+{% endblock %}

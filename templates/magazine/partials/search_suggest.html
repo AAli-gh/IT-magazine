@@ -1,0 +1,11 @@
+{% if items %}
+<div class="card shadow-xl p-2 text-sm">
+  {% for article in items %}
+  <a href="{{ article.get_absolute_url }}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+    <span>{{ article.category.icon }}</span><span class="line-clamp-1">{{ article.display_title }}</span>
+    <span class="mr-auto text-xs text-slate-400 shrink-0">{{ article.get_content_type_display }}</span>
+  </a>
+  {% endfor %}
+  <a href="{% url 'magazine:search' %}?q={{ q|urlencode }}" class="block rounded-lg px-3 py-2 text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800">همه نتایج برای «{{ q }}» ←</a>
+</div>
+{% endif %}

@@ -1,0 +1,16 @@
+AI Daily #{{ article.ai_daily_number }} — {{ article.title }}
+
+{{ article.excerpt }}
+
+چرا مهم است؟
+{{ article.why_important }}
+
+چه کاربردی دارد؟
+{{ article.use_cases }}
+
+چه تأثیری روی توسعه‌دهندگان دارد؟
+{{ article.developer_impact }}
+
+ادامه مطلب: {{ article_url }}
+
+لغو اشتراک: {{ unsubscribe_url }}

@@ -58,10 +58,12 @@
     </header>
 
     {% if article.cover %}
-    <figure class="mt-8 overflow-hidden rounded-2xl"><img src="{{ article.cover.url }}" alt="{{ article.title }}" class="w-full"></figure>
+    <figure class="mt-8 overflow-hidden rounded-2xl"><img src="{{ article.cover.url }}" {% if article.cover_srcset %}srcset="{{ article.cover_srcset }}" sizes="(min-width: 1024px) 900px, 100vw"{% endif %} alt="{{ article.title }}" class="w-full" fetchpriority="high"></figure>
     {% endif %}
 
-    {% if article.video_embed_url %}
+    {% if article.video_src %}
+    <video class="mt-8 w-full rounded-2xl bg-black" controls preload="metadata" src="{{ article.video_src }}"{% if article.cover %} poster="{{ article.cover.url }}"{% endif %}></video>
+    {% elif article.video_embed_url %}
     <div class="mt-8 aspect-video overflow-hidden rounded-2xl bg-black">
       <iframe src="{{ article.video_embed_url }}" class="h-full w-full" allowfullscreen loading="lazy" title="{{ article.title }}"></iframe>
     </div>
@@ -69,8 +71,21 @@
     <a href="{{ article.video_url }}" target="_blank" rel="noopener" class="mt-8 btn-ghost">🎬 مشاهده ویدئو</a>
     {% endif %}
 
-    {% if article.audio_url %}
-    <div class="mt-8 card p-4"><p class="font-semibold mb-2">🎧 گوش دهید</p><audio controls preload="none" class="w-full" src="{{ article.audio_url }}"></audio></div>
+    {% if article.audio_src %}
+    <div class="mt-8 card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <p class="font-semibold">🎧 گوش دهید{% if article.media_duration %} <span class="text-sm text-slate-500 font-normal">({{ article.media_duration|fa_digits }})</span>{% endif %}</p>
+        <a href="{% url 'podcast_rss' %}" class="text-xs text-brand-600">اشتراک پادکست</a>
+      </div>
+      <audio controls preload="none" class="w-full" src="{{ article.audio_src }}"></audio>
+    </div>
+    {% endif %}
+
+    {% if article.content_type == "interview" and article.interviewee_name %}
+    <div class="mt-8 card p-5 flex items-center gap-4">
+      {% if article.interviewee_photo %}<img src="{{ article.interviewee_photo.url }}" alt="{{ article.interviewee_name }}" class="h-16 w-16 rounded-full object-cover">{% else %}<span class="grid place-items-center h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800 text-2xl">🎙️</span>{% endif %}
+      <div><p class="text-xs text-slate-500">گفت‌وگو با</p><p class="font-bold text-lg">{{ article.interviewee_name }}</p>{% if article.interviewee_title %}<p class="text-sm text-slate-500">{{ article.interviewee_title }}</p>{% endif %}</div>
+    </div>
     {% endif %}
 
     {% if article.toc %}
@@ -91,6 +106,23 @@
     <div class="article-body prose prose-slate dark:prose-invert prose-lg max-w-none mt-8 prose-headings:scroll-mt-28 prose-a:text-brand-600 prose-img:rounded-xl leading-9">
       {{ article.body_html|safe }}
     </div>
+
+    {% if interview_qas %}
+    <section class="mt-10 space-y-6" aria-label="پرسش و پاسخ">
+      {% for qa in interview_qas %}
+      <div>
+        <p class="font-bold text-lg leading-8 flex gap-2"><span class="text-brand-600">پرسش:</span><span>{{ qa.question|linebreaksbr }}</span></p>
+        <div class="mt-2 pr-4 border-r-4 border-brand-500/40 leading-9 text-slate-700 dark:text-slate-300">
+          <span class="font-semibold">{{ article.interviewee_name|default:"پاسخ" }}:</span> {{ qa.answer|linebreaksbr }}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if article.ai_generated %}
+    <p class="mt-6 text-xs text-slate-400">این مطلب با کمک هوش مصنوعی (Claude) از روی منبع زیر تهیه و توسط تحریریه بررسی شده است.</p>
+    {% endif %}
 
     {% if article.source_url %}
     <p class="mt-6 text-sm text-slate-500">منبع: <a href="{{ article.source_url }}" target="_blank" rel="noopener nofollow" class="text-brand-600" dir="ltr">{{ article.source_url|truncatechars:60 }}</a></p>

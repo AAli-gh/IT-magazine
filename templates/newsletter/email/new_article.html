@@ -1,0 +1,8 @@
+{% extends "newsletter/email/base.html" %}
+{% block content %}
+<p>{{ user.display_name }} عزیز، مطلب جدیدی در موضوع «{{ article.category.name }}» که دنبال می‌کنید منتشر شد:</p>
+<h1 style="font-size:19px">{{ article.display_title }}</h1>
+{% if article.excerpt %}<p>{{ article.excerpt }}</p>{% endif %}
+<p><a href="{{ article_url }}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:12px;text-decoration:none">خواندن مطلب</a></p>
+<p style="font-size:12px;color:#64748b">می‌توانید این ایمیل‌ها را از بخش ویرایش پروفایل خاموش کنید.</p>
+{% endblock %}

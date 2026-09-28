@@ -1,20 +1,38 @@
 {% load mag %}
 <div class="flex gap-3" id="comment-{{ comment.pk }}">
-  <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 text-sm">{{ comment.user.display_name|slice:":1" }}</span>
+  <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 text-sm">{% if comment.is_deleted %}∅{% else %}{{ comment.user.display_name|slice:":1" }}{% endif %}</span>
   <div class="min-w-0 flex-1">
-    <p class="text-sm"><b>{{ comment.user.display_name }}</b> <span class="text-xs text-slate-400">· {{ comment.created_at|jdate }}</span></p>
-    <p class="mt-1 text-sm leading-7 whitespace-pre-line">{{ comment.body }}</p>
+    {% if comment.is_deleted %}
+      <p class="text-sm italic text-slate-400">این دیدگاه توسط نویسنده‌اش حذف شده است.</p>
+    {% else %}
+      <p class="text-sm"><b>{{ comment.user.display_name }}</b>
+        <span class="text-xs text-slate-400">· {{ comment.created_at|jdate }}{% if comment.edited_at %} · ویرایش‌شده{% endif %}</span>
+        {% if not comment.is_approved %}<span class="chip !bg-amber-100 dark:!bg-amber-900/40 !text-amber-700 dark:!text-amber-300 mr-1">پس از تأیید نمایش داده می‌شود</span>{% endif %}
+      </p>
+      <p class="mt-1 text-sm leading-7 whitespace-pre-line break-words">{{ comment.body }}</p>
+      {% if comment|can_edit_comment:user or comment|can_delete_comment:user %}
+      <div class="mt-1 flex gap-3 text-xs text-slate-500">
+        {% if comment|can_edit_comment:user %}
+        <button type="button" class="hover:text-brand-600" hx-get="{% url 'interactions:edit_comment' comment.pk %}" hx-target="#comment-{{ comment.pk }}" hx-swap="outerHTML">ویرایش</button>
+        {% endif %}
+        {% if comment|can_delete_comment:user %}
+        <button type="button" class="hover:text-red-600" hx-post="{% url 'interactions:delete_comment' comment.pk %}" hx-target="#comment-{{ comment.pk }}" hx-swap="outerHTML" hx-confirm="این دیدگاه حذف شود؟">حذف</button>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endif %}
     {% if not comment.parent_id %}
     <div class="mt-3 space-y-4 border-r-2 border-slate-100 dark:border-slate-800 pr-4" id="replies-{{ comment.pk }}">
       {% for reply in comment.replies.all %}{% if reply.is_approved %}{% include "interactions/partials/comment.html" with comment=reply %}{% endif %}{% endfor %}
     </div>
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and not comment.is_deleted %}
     <details class="mt-2 text-sm">
       <summary class="cursor-pointer text-brand-600 w-fit">پاسخ</summary>
       <form hx-post="{% url 'interactions:comment' comment.article_id %}" hx-target="#replies-{{ comment.pk }}" hx-swap="beforeend"
             hx-on::after-request="if(event.detail.successful) this.reset()" class="mt-2 form-field space-y-2">
         <input type="hidden" name="parent_id" value="{{ comment.pk }}">
-        <textarea name="body" rows="2" required placeholder="پاسخ شما..."></textarea>
+        <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <textarea name="body" rows="2" required maxlength="3000" placeholder="پاسخ شما..."></textarea>
         <button class="btn-primary">ارسال پاسخ</button>
       </form>
     </details>

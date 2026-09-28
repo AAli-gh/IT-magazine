@@ -1,7 +1,9 @@
 <form hx-post="{% url 'interactions:comment' article.pk %}" hx-target="#comment-form-wrap" hx-swap="innerHTML"
       action="{% url 'interactions:comment' article.pk %}" method="post" class="form-field space-y-3">
   {% csrf_token %}
+  {% if notice %}<div class="rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-4 py-3 text-sm">{{ notice }}{% if "ایمیل" in notice %} <a class="underline" href="{% url 'account_email' %}">مدیریت ایمیل</a>{% endif %}</div>{% endif %}
   {{ comment_form.body }}
   {{ comment_form.body.errors }}
+  {{ comment_form.website }}
   <button class="btn-primary">ثبت دیدگاه</button>
 </form>

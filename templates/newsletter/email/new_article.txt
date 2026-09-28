@@ -1,0 +1,3 @@
+{{ user.display_name }} عزیز، مطلب جدیدی در «{{ article.category.name }}» منتشر شد:
+{{ article.display_title }}
+{{ article_url }}

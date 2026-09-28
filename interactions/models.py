@@ -65,7 +65,10 @@ class Comment(models.Model):
     )
     body = models.TextField("متن دیدگاه", max_length=3000)
     is_approved = models.BooleanField("تأیید شده", default=True)
+    is_deleted = models.BooleanField("حذف‌شده توسط کاربر", default=False)
+    held_reason = models.CharField("دلیل نگه‌داشتن برای بررسی", max_length=100, blank=True)
     created_at = models.DateTimeField("تاریخ", auto_now_add=True)
+    edited_at = models.DateTimeField("آخرین ویرایش", null=True, blank=True)
 
     class Meta:
         ordering = ["created_at"]
@@ -74,3 +77,9 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.user}: {self.body[:40]}"
+
+    def can_edit(self, user):
+        return user.is_authenticated and user.pk == self.user_id and not self.is_deleted
+
+    def can_delete(self, user):
+        return user.is_authenticated and (user.pk == self.user_id or user.is_staff) and not self.is_deleted

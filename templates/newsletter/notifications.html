@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load mag %}
+{% block title %}اعلان‌ها | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-extrabold mb-6">🔔 اعلان‌ها</h1>
+{% if page_obj.object_list %}
+<div class="card divide-y divide-slate-100 dark:divide-slate-800">
+  {% for n in page_obj %}
+  <a href="{% url 'newsletter:open_notification' n.pk %}" class="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+    <span>{% if n.kind == "reply" %}💬{% else %}📰{% endif %}</span>
+    <span class="flex-1 {% if not n.is_read %}font-semibold{% endif %}">{{ n.message }}</span>
+    <span class="text-xs text-slate-400 shrink-0">{{ n.created_at|jdate:"%d %B" }}</span>
+    {% if not n.is_read %}<span class="h-2 w-2 mt-2 rounded-full bg-brand-600 shrink-0"></span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% include "partials/pagination.html" %}
+{% else %}
+<div class="card p-10 text-center text-slate-500">اعلانی ندارید. موضوعات مورد علاقه‌تان را دنبال کنید تا از مطالب جدید باخبر شوید.</div>
+{% endif %}
+{% endblock %}

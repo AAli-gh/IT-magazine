@@ -1,3 +1,5 @@
+import datetime
+
 import jdatetime
 from django import template
 from django.utils import timezone
@@ -20,6 +22,9 @@ def jdate(value, fmt="%d %B %Y"):
     """Render a datetime as a Jalali (Shamsi) date with Persian digits."""
     if not value:
         return ""
+    if not isinstance(value, datetime.datetime):  # plain date
+        jd = jdatetime.date.fromgregorian(date=value, locale="fa_IR")
+        return jd.strftime(fmt).translate(PERSIAN_DIGITS)
     if timezone.is_aware(value):
         value = timezone.localtime(value)
     jd = jdatetime.datetime.fromgregorian(datetime=value, locale="fa_IR")
@@ -38,3 +43,13 @@ def query_transform(context, **kwargs):
     for key, value in kwargs.items():
         params[key] = value
     return params.urlencode()
+
+
+@register.filter
+def can_edit_comment(comment, user):
+    return comment.can_edit(user)
+
+
+@register.filter
+def can_delete_comment(comment, user):
+    return comment.can_delete(user)

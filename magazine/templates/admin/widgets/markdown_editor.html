@@ -1,0 +1,19 @@
+<div class="md-editor" data-preview-url="{% url 'magazine:admin_preview' %}" data-upload-url="{% url 'magazine:admin_upload' %}">
+  <div class="md-toolbar" role="toolbar" aria-label="ابزار ویرایش">
+    <button type="button" data-md="heading" title="تیتر">H2</button>
+    <button type="button" data-md="bold" title="پررنگ"><b>B</b></button>
+    <button type="button" data-md="italic" title="کج"><i>I</i></button>
+    <button type="button" data-md="link" title="لینک">🔗</button>
+    <button type="button" data-md="code" title="بلوک کد">&lt;/&gt;</button>
+    <button type="button" data-md="list" title="فهرست">•</button>
+    <button type="button" data-md="quote" title="نقل قول">❝</button>
+    <button type="button" data-md="table" title="جدول">▦</button>
+    <label class="md-upload" title="آپلود تصویر">🖼 تصویر<input type="file" accept="image/*" hidden data-md-upload></label>
+    <span class="md-status" aria-live="polite"></span>
+    <button type="button" class="md-toggle" data-md-toggle>پیش‌نمایش ◧</button>
+  </div>
+  <div class="md-panes">
+    {% include "django/forms/widgets/textarea.html" %}
+    <div class="md-preview article-body" dir="rtl" hidden></div>
+  </div>
+</div>

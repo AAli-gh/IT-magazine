@@ -1,7 +1,18 @@
 {% load mag %}
-{% if page_obj %}
+{% if page_obj is not None %}
   <p class="text-sm text-slate-500 mb-4">{{ page_obj.paginator.count|fa_digits }} نتیجه{% if q %} برای «{{ q }}»{% endif %}</p>
-  {% include "partials/article_grid.html" with empty_message="نتیجه‌ای پیدا نشد. عبارت دیگری را امتحان کنید." %}
+  {% include "partials/article_grid.html" with empty_message="نتیجه‌ای دقیقاً مطابق پیدا نشد." %}
+  {% if corrected %}
+  <p class="mt-6 text-sm">آیا منظورتان <a class="text-brand-600 font-semibold" href="?q={{ corrected|urlencode }}" dir="auto">«{{ corrected }}»</a> بود؟</p>
+  {% endif %}
+  {% if similar %}
+  <section class="mt-8">
+    <h2 class="section-title">🔎 شاید منظورتان این‌ها بود</h2>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {% for article in similar %}{% include "partials/article_card.html" %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
 {% else %}
-  <p class="text-slate-500 text-sm">عبارتی را وارد کنید یا یکی از فیلترها را انتخاب کنید.</p>
+  <p class="text-slate-500 text-sm">عبارتی را وارد کنید یا یکی از فیلترها را انتخاب کنید. جستجو فارسی و انگلیسی را با هم می‌فهمد؛ مثلاً «پایتون» نتایج Python را هم پیدا می‌کند.</p>
 {% endif %}

@@ -10,3 +10,8 @@ urlpatterns = [
     path("follow/<int:pk>/", views.toggle_follow, name="follow"),
     path("comment/<int:pk>/", views.add_comment, name="comment"),
 ]
+
+urlpatterns += [
+    path("comment/<int:pk>/edit/", views.edit_comment, name="edit_comment"),
+    path("comment/<int:pk>/delete/", views.delete_comment, name="delete_comment"),
+]

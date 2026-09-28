@@ -1,0 +1,6 @@
+مهم‌ترین مطالب این هفته در {{ SITE_NAME }}:
+{% for item in items %}
+- {{ item.article.display_title }}
+  {{ item.url }}
+{% endfor %}
+لغو اشتراک: {{ unsubscribe_url }}

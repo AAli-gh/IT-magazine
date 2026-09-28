@@ -1,3 +1,4 @@
+# Development: PostgreSQL + Redis + the app with DEBUG on.
 services:
   db:
     image: postgres:16
@@ -10,10 +11,15 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis:7-alpine
+
   web:
     build: .
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
     environment:
       DATABASE_URL: postgres://itmag:itmag@db:5432/itmag
+      REDIS_URL: redis://redis:6379/0
       DJANGO_DEBUG: "True"
       DJANGO_ALLOWED_HOSTS: "*"
     volumes:
@@ -22,6 +28,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - redis
 
 volumes:
   pgdata:

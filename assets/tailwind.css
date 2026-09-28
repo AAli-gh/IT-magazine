@@ -23,4 +23,13 @@
   .form-field label { @apply block mb-1 text-sm font-medium; }
   .form-field .helptext, .form-field .helptext ul { @apply text-xs text-slate-500 mt-1; }
   .errorlist { @apply text-sm text-red-600 mt-1; }
+  /* allauth renders its forms as <p> rows */
+  .allauth form > p { @apply space-y-1; }
+  .allauth form > p > label { @apply block text-sm font-medium; }
+  .allauth form > p > input:not([type=checkbox]):not([type=hidden]) {
+    @apply w-full rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-brand-500 focus:ring-brand-500;
+  }
+  .allauth form > p > input[type=checkbox] { @apply rounded ms-2 align-middle; }
+  .allauth .helptext { @apply block text-xs text-slate-500 mt-1; }
+  .allauth .helptext a, .allauth p a { @apply text-brand-600; }
 }

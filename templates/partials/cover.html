@@ -1,6 +1,7 @@
-{# Cover image, or a gradient placeholder with the category icon. #}
+{# Cover image (responsive WebP variants when available), or a gradient placeholder with the category icon. #}
 {% if article.cover %}
-<img src="{{ article.cover.url }}" alt="{{ article.title }}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+<img src="{{ article.cover_small }}" {% if article.cover_srcset %}srcset="{{ article.cover_srcset }}" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"{% endif %}
+     alt="{{ article.title }}" loading="lazy" decoding="async" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
 {% else %}
 <div class="h-full w-full grid place-items-center bg-gradient-to-br from-brand-500/80 via-violet-600/80 to-fuchsia-600/80 text-5xl">{{ article.category.icon|default:"📰" }}</div>
 {% endif %}

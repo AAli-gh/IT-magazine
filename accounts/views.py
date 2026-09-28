@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count
@@ -8,28 +7,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from interactions.models import Bookmark, Like, ReadingHistory
 from magazine.models import Article, Category
 
-from .forms import ProfileForm, SignUpForm
+from .forms import ProfileForm
 from .models import User
 
 PROFILE_TABS = {
     "feed": "فید من",
+    "for_you": "پیشنهاد برای شما",
     "bookmarks": "ذخیره‌شده‌ها",
     "likes": "پسندیده‌ها",
     "history": "تاریخچه مطالعه",
     "topics": "موضوعات من",
 }
-
-
-def signup(request):
-    if request.user.is_authenticated:
-        return redirect("accounts:profile")
-    form = SignUpForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        user = form.save()
-        login(request, user)
-        messages.success(request, "خوش آمدید! حساب شما ساخته شد.")
-        return redirect("accounts:profile")
-    return render(request, "registration/signup.html", {"form": form})
 
 
 def _articles_via(model, user):
@@ -49,6 +37,12 @@ def profile(request):
         articles = Article.objects.published().with_relations().filter(
             category__followers__user=user
         )
+    elif tab == "for_you":
+        from magazine.recommender import for_user_ids
+
+        ids = for_user_ids(user, 24)
+        found = Article.objects.published().with_relations().in_bulk(ids)
+        articles = [found[pk] for pk in ids if pk in found]
     elif tab == "bookmarks":
         articles = _articles_via(Bookmark, user)
     elif tab == "likes":
