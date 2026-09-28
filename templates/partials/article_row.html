@@ -1,0 +1,8 @@
+{% load mag %}
+<article class="group flex gap-3 items-start">
+  <a href="{{ article.get_absolute_url }}" class="shrink-0 h-16 w-24 overflow-hidden rounded-xl">{% include "partials/cover.html" %}</a>
+  <div class="min-w-0">
+    <h4 class="text-sm font-semibold leading-6 line-clamp-2"><a href="{{ article.get_absolute_url }}" class="hover:text-brand-600">{{ article.display_title }}</a></h4>
+    <p class="text-xs text-slate-400 mt-1">{{ article.published_at|jdate }} · {{ article.get_content_type_display }}</p>
+  </div>
+</article>

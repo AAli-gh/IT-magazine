@@ -1,0 +1,17 @@
+{% load mag %}
+<article class="group card overflow-hidden flex flex-col hover:shadow-lg transition">
+  <a href="{{ article.get_absolute_url }}" class="block aspect-[16/9] overflow-hidden">{% include "partials/cover.html" %}</a>
+  <div class="p-4 flex flex-col flex-1">
+    <div class="flex items-center gap-2 text-xs mb-2">
+      <a href="{{ article.category.get_absolute_url }}" class="text-brand-600 dark:text-brand-500 font-semibold">{{ article.category.icon }} {{ article.category.name }}</a>
+      <span class="text-slate-400">•</span>
+      <a href="{% url 'magazine:content_type' article.content_type %}" class="text-slate-500">{{ article.get_content_type_display }}</a>
+    </div>
+    <h3 class="font-bold leading-7"><a href="{{ article.get_absolute_url }}" class="hover:text-brand-600">{{ article.display_title }}</a></h3>
+    {% if article.excerpt %}<p class="mt-2 text-sm text-slate-500 leading-6 line-clamp-2">{{ article.excerpt }}</p>{% endif %}
+    <div class="mt-auto pt-3 flex items-center gap-3 text-xs text-slate-400">
+      <span>{{ article.published_at|jdate }}</span>
+      <span>⏱ {{ article.reading_time|fa_digits }} دقیقه</span>
+    </div>
+  </div>
+</article>

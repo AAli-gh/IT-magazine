@@ -1,0 +1,24 @@
+{% load mag %}
+<div class="flex gap-3" id="comment-{{ comment.pk }}">
+  <span class="shrink-0 grid place-items-center h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 text-sm">{{ comment.user.display_name|slice:":1" }}</span>
+  <div class="min-w-0 flex-1">
+    <p class="text-sm"><b>{{ comment.user.display_name }}</b> <span class="text-xs text-slate-400">· {{ comment.created_at|jdate }}</span></p>
+    <p class="mt-1 text-sm leading-7 whitespace-pre-line">{{ comment.body }}</p>
+    {% if not comment.parent_id %}
+    <div class="mt-3 space-y-4 border-r-2 border-slate-100 dark:border-slate-800 pr-4" id="replies-{{ comment.pk }}">
+      {% for reply in comment.replies.all %}{% if reply.is_approved %}{% include "interactions/partials/comment.html" with comment=reply %}{% endif %}{% endfor %}
+    </div>
+    {% if user.is_authenticated %}
+    <details class="mt-2 text-sm">
+      <summary class="cursor-pointer text-brand-600 w-fit">پاسخ</summary>
+      <form hx-post="{% url 'interactions:comment' comment.article_id %}" hx-target="#replies-{{ comment.pk }}" hx-swap="beforeend"
+            hx-on::after-request="if(event.detail.successful) this.reset()" class="mt-2 form-field space-y-2">
+        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+        <textarea name="body" rows="2" required placeholder="پاسخ شما..."></textarea>
+        <button class="btn-primary">ارسال پاسخ</button>
+      </form>
+    </details>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>

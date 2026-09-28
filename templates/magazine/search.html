@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{% if q %}جستجو: {{ q }}{% else %}جستجوی پیشرفته{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold mb-6">🔍 جستجوی پیشرفته</h1>
+<form action="{% url 'magazine:search' %}" method="get" class="card p-5 grid gap-4 md:grid-cols-6 items-end form-field"
+      hx-get="{% url 'magazine:search' %}" hx-target="#search-results" hx-push-url="true"
+      hx-trigger="submit, input changed delay:400ms from:input[name=q], change from:select">
+  <div class="md:col-span-2">
+    <label for="q">عبارت</label>
+    <input id="q" type="search" name="q" value="{{ q }}" placeholder="مثلاً: Django، LLM، Kubernetes" autofocus>
+  </div>
+  <div>
+    <label for="category">دسته‌بندی</label>
+    <select id="category" name="category">
+      <option value="">همه</option>
+      {% for cat in nav_categories %}<option value="{{ cat.slug }}" {% if cat.slug == selected_category %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="type">نوع محتوا</label>
+    <select id="type" name="type">
+      <option value="">همه</option>
+      {% for value, label in content_types %}<option value="{{ value }}" {% if value == selected_type %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="sort">مرتب‌سازی</label>
+    <select id="sort" name="sort">
+      {% for value, label in sort_options %}<option value="{{ value }}" {% if value == sort %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <input type="hidden" name="tag" value="{{ selected_tag }}">
+  <button class="btn-primary justify-center">جستجو</button>
+</form>
+
+{% if popular_tags %}
+<div class="mt-4 flex flex-wrap gap-2">
+  {% for tag in popular_tags %}<a href="?tag={{ tag.slug|urlencode }}" class="chip {% if tag.slug == selected_tag %}!bg-brand-600 !text-white{% endif %}">#{{ tag.name }}</a>{% endfor %}
+</div>
+{% endif %}
+
+<div id="search-results" class="mt-8">{% include "magazine/partials/search_results.html" %}</div>
+{% endblock %}

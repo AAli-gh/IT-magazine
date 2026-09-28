@@ -1,0 +1,7 @@
+{% load mag %}
+{% if page_obj %}
+  <p class="text-sm text-slate-500 mb-4">{{ page_obj.paginator.count|fa_digits }} نتیجه{% if q %} برای «{{ q }}»{% endif %}</p>
+  {% include "partials/article_grid.html" with empty_message="نتیجه‌ای پیدا نشد. عبارت دیگری را امتحان کنید." %}
+{% else %}
+  <p class="text-slate-500 text-sm">عبارتی را وارد کنید یا یکی از فیلترها را انتخاب کنید.</p>
+{% endif %}

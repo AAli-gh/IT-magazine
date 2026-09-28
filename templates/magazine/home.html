@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load mag %}
+
+{% block content %}
+{% banner_slot "home_top" %}
+
+{# 🔥 Top story of the day #}
+{% if featured %}
+<section class="group card overflow-hidden grid md:grid-cols-2 mb-10">
+  <a href="{{ featured.get_absolute_url }}" class="block aspect-[16/10] md:aspect-auto md:min-h-[320px] overflow-hidden">
+    {% with article=featured %}{% include "partials/cover.html" %}{% endwith %}
+  </a>
+  <div class="p-6 md:p-10 flex flex-col justify-center">
+    <span class="chip !bg-rose-100 dark:!bg-rose-900/40 !text-rose-700 dark:!text-rose-300 w-fit mb-4">🔥 مهم‌ترین مطلب امروز</span>
+    <h1 class="text-2xl md:text-3xl font-extrabold leading-[1.6]">
+      <a href="{{ featured.get_absolute_url }}" class="hover:text-brand-600">{{ featured.display_title }}</a>
+    </h1>
+    {% if featured.excerpt %}<p class="mt-4 text-slate-500 leading-8">{{ featured.excerpt }}</p>{% endif %}
+    <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+      <a href="{{ featured.category.get_absolute_url }}" class="chip">{{ featured.category }}</a>
+      {% if featured.author %}<span>✍️ {{ featured.author.display_name }}</span>{% endif %}
+      <span>{{ featured.published_at|jdate }}</span>
+      <span>⏱ {{ featured.reading_time|fa_digits }} دقیقه</span>
+    </div>
+  </div>
+</section>
+{% else %}
+<section class="card p-10 text-center mb-10">
+  <p class="text-2xl font-bold">به {{ SITE_NAME }} خوش آمدید 👋</p>
+  <p class="mt-2 text-slate-500">هنوز مطلبی منتشر نشده است. از پنل مدیریت اولین مقاله را اضافه کنید.</p>
+</section>
+{% endif %}
+
+<div class="grid gap-10 lg:grid-cols-[1fr_320px]">
+  <div class="space-y-12 min-w-0">
+
+    {% if latest %}
+    <section>
+      <div class="section-title"><h2>🆕 جدیدترین مطالب</h2><a href="{% url 'magazine:search' %}?sort=new" class="text-sm text-brand-600 font-normal">همه ←</a></div>
+      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {% for article in latest %}{% include "partials/article_card.html" %}{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% banner_slot "home_middle" %}
+
+    {% for category, items in category_sections %}
+    <section>
+      <div class="section-title">
+        <h2>{{ category.icon }} {{ category.name }}</h2>
+        <a href="{{ category.get_absolute_url }}" class="text-sm text-brand-600 font-normal">مشاهده همه ←</a>
+      </div>
+      {% if category.description %}<p class="-mt-2 mb-4 text-sm text-slate-500">{{ category.description }}</p>{% endif %}
+      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {% for article in items %}{% include "partials/article_card.html" %}{% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+
+    {% if tutorials %}
+    <section>
+      <div class="section-title"><h2>📚 آموزش‌های منتخب</h2><a href="{% url 'magazine:content_type' 'tutorial' %}" class="text-sm text-brand-600 font-normal">همه آموزش‌ها ←</a></div>
+      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {% for article in tutorials %}{% include "partials/article_card.html" %}{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if news %}
+    <section>
+      <div class="section-title"><h2>📰 آخرین اخبار IT</h2><a href="{% url 'magazine:content_type' 'news' %}" class="text-sm text-brand-600 font-normal">آرشیو اخبار ←</a></div>
+      <div class="card divide-y divide-slate-100 dark:divide-slate-800">
+        {% for article in news %}
+        <a href="{{ article.get_absolute_url }}" class="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <span class="text-xs text-slate-400 w-24 shrink-0">{{ article.published_at|jdate:"%d %B" }}</span>
+          <span class="font-medium">{{ article.title }}</span>
+          <span class="mr-auto chip shrink-0 hidden sm:inline-flex">{{ article.category.icon }} {{ article.category.name }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="space-y-6">
+    {% include "magazine/partials/ai_daily_box.html" with article=ai_daily %}
+
+    {% if popular %}
+    <div class="card p-5">
+      <h3 class="font-bold mb-4">📈 پربازدیدترین‌ها</h3>
+      <ol class="space-y-4">
+        {% for article in popular %}
+        <li class="flex gap-3">
+          <span class="text-2xl font-black text-slate-300 dark:text-slate-700 w-6">{{ forloop.counter|fa_digits }}</span>
+          <a href="{{ article.get_absolute_url }}" class="text-sm font-medium leading-6 hover:text-brand-600">{{ article.display_title }}</a>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+
+    <div class="card p-5">
+      <h3 class="font-bold mb-4">🧭 موضوعات</h3>
+      <div class="flex flex-wrap gap-2">
+        {% for cat in nav_categories %}<a href="{{ cat.get_absolute_url }}" class="chip">{{ cat.icon }} {{ cat.name }}</a>{% endfor %}
+      </div>
+    </div>
+    {% banner_slot "sidebar" %}
+  </aside>
+</div>
+{% endblock %}

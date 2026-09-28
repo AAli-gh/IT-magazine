@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}#{{ tag.name }} | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold mb-8">🏷️ #{{ tag.name }}</h1>
+{% include "partials/article_grid.html" %}
+{% endblock %}

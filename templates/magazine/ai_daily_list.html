@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load mag %}
+{% block title %}AI Daily | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}AI Daily: هر روز یک موضوع مهم هوش مصنوعی؛ چرا مهم است، چه کاربردی دارد و چه تأثیری روی توسعه‌دهندگان دارد.{% endblock %}
+{% block content %}
+<header class="rounded-2xl p-8 md:p-12 text-white bg-gradient-to-br from-violet-600 via-indigo-600 to-brand-600 mb-10">
+  <h1 class="text-4xl font-black" dir="ltr">🤖 AI Daily</h1>
+  <p class="mt-4 max-w-2xl leading-8 text-white/90">هر روز یک مقاله یا موضوع مهم از دنیای هوش مصنوعی — کوتاه، دقیق و کاربردی. در هر شماره سه سؤال را جواب می‌دهیم: <b>چرا مهم است؟</b> <b>چه کاربردی دارد؟</b> و <b>چه تأثیری روی توسعه‌دهندگان دارد؟</b></p>
+</header>
+{% if page_obj.object_list %}
+<ol class="space-y-4">
+  {% for article in page_obj %}
+  <li class="card p-5 flex gap-5 items-start hover:shadow-md transition">
+    <span class="shrink-0 rounded-xl bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 font-black px-3 py-2 text-lg" dir="ltr">#{{ article.ai_daily_number }}</span>
+    <div class="min-w-0">
+      <a href="{{ article.get_absolute_url }}" class="text-lg font-bold hover:text-brand-600">{{ article.title }}</a>
+      <p class="text-xs text-slate-400 mt-1">{{ article.published_at|jdate }} · ⏱ {{ article.reading_time|fa_digits }} دقیقه</p>
+      {% if article.why_important %}<p class="mt-2 text-sm text-slate-500 leading-7 line-clamp-2">{{ article.why_important }}</p>{% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% include "partials/pagination.html" %}
+{% else %}
+<div class="card p-10 text-center text-slate-500">اولین شماره AI Daily به زودی منتشر می‌شود.</div>
+{% endif %}
+{% endblock %}

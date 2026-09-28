@@ -1,0 +1,50 @@
+<header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
+  <div class="mx-auto max-w-7xl px-4 h-16 flex items-center gap-4">
+    <a href="{% url 'magazine:home' %}" class="flex items-center gap-2 shrink-0">
+      <span class="grid place-items-center h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 text-white font-black">IT</span>
+      <span class="leading-tight">
+        <span class="block font-extrabold">{{ SITE_NAME }}</span>
+        <span class="block text-[11px] text-slate-500 tracking-wide" dir="ltr">{{ SITE_NAME_EN }}</span>
+      </span>
+    </a>
+
+    <form action="{% url 'magazine:search' %}" method="get" role="search" class="hidden md:block flex-1 max-w-md mx-auto">
+      <label class="relative block">
+        <span class="sr-only">جستجو</span>
+        <input type="search" name="q" value="{{ q|default:'' }}" placeholder="جستجو در مقالات، آموزش‌ها و اخبار..."
+               class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 pr-10 text-sm focus:ring-brand-500">
+        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+      </label>
+    </form>
+
+    <nav class="mr-auto flex items-center gap-1 text-sm">
+      <div class="relative" data-dropdown>
+        <button type="button" class="btn-ghost" data-dropdown-toggle aria-expanded="false">دسته‌بندی‌ها ▾</button>
+        <div class="hidden absolute left-0 mt-2 w-72 card p-2 shadow-xl grid grid-cols-1 max-h-[70vh] overflow-y-auto" data-dropdown-menu>
+          {% for cat in nav_categories %}
+          <a href="{{ cat.get_absolute_url }}" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800">{{ cat.icon }} {{ cat.name }}</a>
+          {% endfor %}
+          <hr class="my-2 border-slate-200 dark:border-slate-800">
+          <a href="{% url 'magazine:ai_daily' %}" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold">🤖 AI Daily</a>
+        </div>
+      </div>
+      <a href="{% url 'magazine:search' %}" class="md:hidden btn-ghost" aria-label="جستجو">🔍</a>
+      <button type="button" class="btn-ghost" data-theme-toggle aria-label="تغییر تم">🌓</button>
+      {% if user.is_authenticated %}
+        <a href="{% url 'accounts:profile' %}" class="btn-ghost">👤 {{ user.display_name }}</a>
+        {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="hidden sm:inline-flex btn-ghost">پنل</a>{% endif %}
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn-ghost">ورود</a>
+        <a href="{% url 'accounts:signup' %}" class="hidden sm:inline-flex btn-primary">ثبت‌نام</a>
+      {% endif %}
+    </nav>
+  </div>
+  <div class="border-t border-slate-100 dark:border-slate-900">
+    <div class="mx-auto max-w-7xl px-4 flex items-center gap-2 overflow-x-auto py-2 text-sm no-scrollbar">
+      <a href="{% url 'magazine:ai_daily' %}" class="chip whitespace-nowrap shrink-0 !bg-violet-100 dark:!bg-violet-900/40 font-semibold">🤖 AI Daily</a>
+      {% for cat in nav_categories %}
+      <a href="{{ cat.get_absolute_url }}" class="chip whitespace-nowrap shrink-0">{{ cat.icon }} {{ cat.name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</header>

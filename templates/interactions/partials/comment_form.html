@@ -1,0 +1,7 @@
+<form hx-post="{% url 'interactions:comment' article.pk %}" hx-target="#comment-form-wrap" hx-swap="innerHTML"
+      action="{% url 'interactions:comment' article.pk %}" method="post" class="form-field space-y-3">
+  {% csrf_token %}
+  {{ comment_form.body }}
+  {{ comment_form.body.errors }}
+  <button class="btn-primary">ثبت دیدگاه</button>
+</form>

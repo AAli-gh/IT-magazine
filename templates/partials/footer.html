@@ -1,0 +1,27 @@
+<footer class="mt-16 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+  <div class="mx-auto max-w-7xl px-4 py-10 grid gap-8 md:grid-cols-4 text-sm">
+    <div class="md:col-span-2">
+      <p class="font-extrabold text-lg">{{ SITE_NAME }} <span class="text-slate-400 font-normal" dir="ltr">| {{ SITE_NAME_EN }}</span></p>
+      <p class="mt-2 text-slate-500 leading-7">{{ SITE_DESCRIPTION }}</p>
+      <a href="{% url 'rss' %}" class="chip mt-4">📡 RSS</a>
+    </div>
+    <div>
+      <p class="font-bold mb-3">نوع محتوا</p>
+      <ul class="space-y-1.5 text-slate-500">
+        {% for value, label in content_types %}
+        <li><a class="hover:text-brand-600" href="{% url 'magazine:content_type' value %}">{{ label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <p class="font-bold mb-3">صفحات</p>
+      <ul class="space-y-1.5 text-slate-500">
+        {% for p in footer_pages %}
+        <li><a class="hover:text-brand-600" href="{{ p.get_absolute_url }}">{{ p.title }}</a></li>
+        {% endfor %}
+        <li><a class="hover:text-brand-600" href="{% url 'magazine:search' %}">جستجوی پیشرفته</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="text-center text-xs text-slate-400 pb-6">© {{ SITE_NAME }} — تمامی حقوق محفوظ است.</p>
+</footer>

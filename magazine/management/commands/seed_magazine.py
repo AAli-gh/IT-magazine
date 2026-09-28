@@ -1,0 +1,149 @@
+"""Create the magazine's base categories and pages; optionally demo content.
+
+    python manage.py seed_magazine          # categories + static pages
+    python manage.py seed_magazine --demo   # ... plus a demo author and sample articles
+"""
+
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+from django.db import transaction
+from django.utils import timezone
+
+from core.models import Page
+from magazine.models import Article, Category, Tag
+
+# (slug, icon, name, description, show_on_home)
+CATEGORIES = [
+    ("ai", "🤖", "هوش مصنوعی و یادگیری ماشین", "مدل‌های زبانی، یادگیری عمیق، بینایی ماشین و ابزارهای AI", True),
+    ("programming", "💻", "برنامه‌نویسی", "زبان‌ها، الگوها، معماری نرم‌افزار و تجربه‌های کدنویسی", True),
+    ("web", "🌐", "توسعه وب", "فرانت‌اند، بک‌اند، فریم‌ورک‌ها و استانداردهای وب", False),
+    ("security", "🔐", "امنیت سایبری", "آسیب‌پذیری‌ها، حملات، دفاع و حریم خصوصی", True),
+    ("cloud-devops", "☁️", "Cloud و DevOps", "کانتینرها، Kubernetes، CI/CD و زیرساخت ابری", False),
+    ("database", "🗄️", "دیتابیس", "SQL، NoSQL، طراحی داده و بهینه‌سازی کوئری", False),
+    ("computer-science", "🧠", "علوم کامپیوتر", "الگوریتم‌ها، ساختمان داده و مبانی نظری", False),
+    ("hardware", "🖥️", "سخت‌افزار", "پردازنده، GPU، تراشه‌ها و قطعات", False),
+    ("gaming", "🎮", "گیم و تکنولوژی", "موتورهای بازی، کنسول‌ها و صنعت گیم", False),
+    ("mobile", "📱", "موبایل و فناوری", "اندروید، iOS، اپلیکیشن‌ها و گجت‌ها", False),
+    ("news-trends", "🚀", "اخبار و ترندهای IT", "تازه‌ترین رویدادها و روندهای دنیای فناوری", False),
+    ("tutorials", "📚", "آموزش و Tutorials", "آموزش‌های گام‌به‌گام و کاربردی", False),
+    ("research", "🔬", "مقالات علمی و Research", "مرور و تحلیل پژوهش‌های علمی روز", False),
+]
+
+PAGES = [
+    ("about", "درباره ما", "**مجله فناوری** رسانه‌ای فارسی برای علاقه‌مندان و متخصصان دنیای IT است.\n\n"
+                          "ما هر روز مقاله، خبر، آموزش و تحلیل تازه از دنیای هوش مصنوعی، برنامه‌نویسی، "
+                          "امنیت و فناوری منتشر می‌کنیم."),
+    ("contact", "تماس با ما", "برای همکاری، پیشنهاد یا ارسال مطلب با ما در ارتباط باشید."),
+]
+
+DEMO_BODY = """## مقدمه
+
+این یک مطلب نمونه است که برای نمایش امکانات مجله ساخته شده. متن مقاله با **Markdown** نوشته می‌شود و
+فهرست مطالب به‌صورت خودکار از تیترها ساخته می‌شود.
+
+## یک نمونه کد
+
+```python
+from django.db import models
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.title
+```
+
+### نکات مهم
+
+- کدها به‌صورت خودکار رنگ‌آمیزی می‌شوند.
+- دکمه کپی روی هر بلوک کد وجود دارد.
+- زمان مطالعه به‌صورت خودکار محاسبه می‌شود.
+
+## جمع‌بندی
+
+| ویژگی | وضعیت |
+|-------|-------|
+| فهرست مطالب | ✅ |
+| رنگ‌آمیزی کد | ✅ |
+"""
+
+DEMO_ARTICLES = [
+    # (title, category slug, content type, tags, featured, editor pick)
+    ("راهنمای جامع مدل‌های زبانی بزرگ (LLM) برای توسعه‌دهندگان", "ai", "article", ["LLM", "AI"], True, False),
+    ("شروع کار با Django REST Framework", "tutorials", "tutorial", ["Django", "Python", "API"], False, True),
+    ("۱۰ نکته برای نوشتن کد پایتون تمیزتر", "programming", "article", ["Python", "Clean Code"], False, False),
+    ("آسیب‌پذیری جدید در کتابخانه‌های محبوب متن‌باز کشف شد", "security", "news", ["Security", "Open Source"], False, False),
+    ("HTMX: تعامل‌پذیری بدون فریم‌ورک‌های سنگین جاوااسکریپت", "web", "tutorial", ["HTMX", "Frontend"], False, True),
+    ("بررسی Kubernetes 1.34: چه چیزهایی تغییر کرد؟", "cloud-devops", "review", ["Kubernetes", "DevOps"], False, False),
+    ("معرفی ابزار هوش مصنوعی برای کدنویسی", "ai", "ai_tool", ["AI", "Developer Tools"], False, False),
+    ("پروژه متن‌باز هفته: یک پایگاه‌داده برداری سبک", "database", "open_source", ["Open Source", "Vector DB"], False, False),
+    ("مروری بر مقاله Attention Is All You Need", "research", "research", ["Transformer", "Research"], False, False),
+    ("اصول رمزنگاری که هر برنامه‌نویس باید بداند", "security", "article", ["Security", "Cryptography"], False, False),
+    ("بازار پردازنده‌های گرافیکی در سال جدید", "hardware", "news", ["GPU"], False, False),
+    ("مدل جدید متن‌باز هوش مصنوعی معرفی شد", "ai", "ai_daily", ["AI", "LLM"], False, False),
+]
+
+
+class Command(BaseCommand):
+    help = "Seed categories and static pages (and demo content with --demo)."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--demo", action="store_true", help="Also create a demo author and sample articles.")
+
+    @transaction.atomic
+    def handle(self, *args, demo=False, **options):
+        for order, (slug, icon, name, description, on_home) in enumerate(CATEGORIES):
+            Category.objects.update_or_create(
+                slug=slug,
+                defaults={"icon": icon, "name": name, "description": description,
+                          "order": order, "show_on_home": on_home},
+            )
+        for order, (slug, title, body) in enumerate(PAGES):
+            Page.objects.get_or_create(slug=slug, defaults={"title": title, "body": body, "order": order})
+        self.stdout.write(self.style.SUCCESS(f"{len(CATEGORIES)} categories and {len(PAGES)} pages ready."))
+
+        if demo:
+            self._create_demo()
+
+    def _create_demo(self):
+        User = get_user_model()
+        author, created = User.objects.get_or_create(
+            username="editor",
+            defaults={"first_name": "تیم", "last_name": "تحریریه", "is_author": True,
+                      "bio": "تیم تحریریه مجله فناوری"},
+        )
+        if created:
+            author.set_unusable_password()
+            author.save()
+
+        now = timezone.now()
+        count = 0
+        for i, (title, cat_slug, ctype, tag_names, featured, pick) in enumerate(DEMO_ARTICLES):
+            if Article.objects.filter(title=title).exists():
+                continue
+            extra = {}
+            if ctype == Article.ContentType.AI_DAILY:
+                extra = {
+                    "why_important": "مدل‌های متن‌باز رقابت را با مدل‌های تجاری نزدیک‌تر می‌کنند.",
+                    "use_cases": "دستیار کدنویسی، خلاصه‌سازی متن و چت‌بات‌های سازمانی.",
+                    "developer_impact": "امکان اجرای محلی مدل و کاهش هزینه‌های API برای توسعه‌دهندگان.",
+                }
+            article = Article.objects.create(
+                title=title,
+                category=Category.objects.get(slug=cat_slug),
+                content_type=ctype,
+                author=author,
+                excerpt=f"خلاصه‌ای کوتاه درباره «{title}» که در کارت‌ها و نتایج جستجو نمایش داده می‌شود.",
+                body=DEMO_BODY,
+                status=Article.Status.PUBLISHED,
+                published_at=now - timedelta(hours=i * 7),
+                is_featured=featured,
+                is_editor_pick=pick,
+                **extra,
+            )
+            article.tags.set([Tag.objects.get_or_create(name=name)[0] for name in tag_names])
+            count += 1
+        self.stdout.write(self.style.SUCCESS(f"{count} demo articles created."))

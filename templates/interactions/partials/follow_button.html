@@ -1,0 +1,6 @@
+{% load mag %}
+<button type="button" hx-post="{% url 'interactions:follow' category.pk %}" hx-swap="outerHTML"
+        class="{% if following %}btn-ghost{% else %}btn-primary{% endif %}" aria-pressed="{{ following|yesno:'true,false' }}">
+  {% if following %}✓ دنبال می‌کنید{% else %}➕ دنبال کردن{% endif %}
+  <span class="text-xs opacity-70">({{ follower_count|fa_digits }})</span>
+</button>

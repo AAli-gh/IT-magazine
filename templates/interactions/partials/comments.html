@@ -1,0 +1,13 @@
+{% load mag %}
+<section id="comments" class="mt-12">
+  <h2 class="section-title">💬 دیدگاه‌ها</h2>
+  {% if user.is_authenticated %}
+    <div id="comment-form-wrap">{% include "interactions/partials/comment_form.html" %}</div>
+  {% else %}
+    <div class="card p-5 text-sm">برای ثبت دیدگاه <a class="text-brand-600 font-semibold" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}%23comments">وارد شوید</a>.</div>
+  {% endif %}
+  <div id="comment-list" class="mt-6 space-y-6">
+    {% for comment in comments %}{% include "interactions/partials/comment.html" %}
+    {% empty %}<p class="text-sm text-slate-500" id="no-comments">اولین نفری باشید که دیدگاه می‌گذارد.</p>{% endfor %}
+  </div>
+</section>

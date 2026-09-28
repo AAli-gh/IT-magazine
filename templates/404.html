@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}صفحه پیدا نشد | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="text-center py-24">
+  <p class="text-7xl font-black text-slate-300 dark:text-slate-700">۴۰۴</p>
+  <p class="mt-4 text-xl font-bold">صفحه‌ای که دنبالش بودید پیدا نشد.</p>
+  <div class="mt-6 flex justify-center gap-2"><a href="{% url 'magazine:home' %}" class="btn-primary">صفحه اصلی</a><a href="{% url 'magazine:search' %}" class="btn-ghost">جستجو</a></div>
+</div>
+{% endblock %}

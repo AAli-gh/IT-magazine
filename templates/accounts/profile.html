@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load mag %}
+{% block title %}پروفایل من | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<header class="card p-6 flex flex-wrap items-center gap-5 mb-6">
+  {% if user.avatar %}<img src="{{ user.avatar.url }}" class="h-16 w-16 rounded-full object-cover" alt="">{% else %}<span class="grid place-items-center h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800 text-2xl">👤</span>{% endif %}
+  <div class="flex-1 min-w-[200px]">
+    <h1 class="text-2xl font-extrabold">{{ user.display_name }}</h1>
+    <p class="text-sm text-slate-500">عضو از {{ user.date_joined|jdate }}</p>
+    {% if user.bio %}<p class="mt-2 text-sm leading-7">{{ user.bio }}</p>{% endif %}
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'accounts:edit_profile' %}" class="btn-ghost">✏️ ویرایش</a>
+    <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn-ghost">خروج</button></form>
+  </div>
+</header>
+
+<nav class="flex gap-2 overflow-x-auto mb-6 no-scrollbar">
+  {% for key, label in tabs %}
+  <a href="?tab={{ key }}" class="chip whitespace-nowrap !text-sm !px-4 !py-2 {% if key == tab %}!bg-brand-600 !text-white{% endif %}">{{ label }}</a>
+  {% endfor %}
+</nav>
+
+{% if tab == "topics" %}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for category in topic_categories %}
+    <div class="card p-4 flex items-center justify-between gap-3">
+      <a href="{{ category.get_absolute_url }}" class="font-semibold">{{ category.icon }} {{ category.name }}</a>
+      {% if category.pk in followed_ids %}
+        {% include "interactions/partials/follow_button.html" with following=True follower_count=category.follower_count %}
+      {% else %}
+        {% include "interactions/partials/follow_button.html" with following=False follower_count=category.follower_count %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  {% if tab == "feed" and not followed_ids %}
+  <div class="card p-8 text-center text-slate-500">هنوز موضوعی را دنبال نکرده‌اید. از <a href="?tab=topics" class="text-brand-600">موضوعات</a> شروع کنید.</div>
+  {% else %}
+  {% include "partials/article_grid.html" with empty_message="موردی برای نمایش وجود ندارد." %}
+  {% endif %}
+{% endif %}
+{% endblock %}

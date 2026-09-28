@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ content_type_label }} | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold mb-2">{{ content_type_label }}</h1>
+<div class="flex flex-wrap gap-2 mb-8 mt-4">
+  {% for value, label in content_types %}
+  <a href="{% url 'magazine:content_type' value %}" class="chip {% if value == content_type %}!bg-brand-600 !text-white{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+{% include "partials/article_grid.html" %}
+{% endblock %}

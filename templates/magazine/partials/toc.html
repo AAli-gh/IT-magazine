@@ -1,0 +1,7 @@
+<ol class="mt-3 space-y-1.5 text-sm" data-toc>
+  {% for item in article.toc %}
+  <li style="padding-right: {% if item.level == 3 %}1rem{% elif item.level == 4 %}2rem{% else %}0{% endif %}">
+    <a href="#{{ item.id }}" class="block text-slate-500 hover:text-brand-600 leading-6">{{ item.name }}</a>
+  </li>
+  {% endfor %}
+</ol>

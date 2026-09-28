@@ -1,0 +1,19 @@
+/* Site-wide tweaks on top of Tailwind. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Code is always left-to-right, even inside RTL articles. */
+.article-body pre, .article-body code, .highlight { direction: ltr; text-align: left; }
+.article-body .highlight { position: relative; border-radius: 0.75rem; margin: 1.5rem 0; }
+.article-body .highlight pre { margin: 0; background: transparent; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.7; }
+.article-body :not(pre) > code { background: rgb(148 163 184 / 0.2); padding: 0.1rem 0.4rem; border-radius: 0.35rem; font-weight: 500; }
+.article-body :not(pre) > code::before, .article-body :not(pre) > code::after { content: none; }
+
+.copy-btn {
+  position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; padding: 0.2rem 0.6rem;
+  border-radius: 0.5rem; background: rgb(255 255 255 / 0.1); color: #e2e8f0; opacity: 0; transition: opacity .15s;
+}
+.highlight:hover .copy-btn, .copy-btn:focus { opacity: 1; }
+
+[data-toc] a.active { color: rgb(37 99 235); font-weight: 600; }
+.htmx-request { opacity: .6; transition: opacity .2s; }

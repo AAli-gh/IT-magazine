@@ -1,0 +1,8 @@
+{# Top-level: reset form and append to list out-of-band. Replies: just the new reply. #}
+{% if comment.parent_id %}
+{% include "interactions/partials/comment.html" %}
+{% else %}
+{% include "interactions/partials/comment_form.html" %}
+<div hx-swap-oob="beforeend:#comment-list">{% include "interactions/partials/comment.html" %}</div>
+<p id="no-comments" hx-swap-oob="delete"></p>
+{% endif %}

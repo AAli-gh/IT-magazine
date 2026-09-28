@@ -1,0 +1,26 @@
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../vendor/vazirmatn/Vazirmatn-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card { @apply rounded-2xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800; }
+  .btn { @apply inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition; }
+  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+  .btn-ghost { @apply btn ring-1 ring-slate-200 dark:ring-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs text-slate-700 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-slate-700; }
+  .section-title { @apply flex items-center justify-between mb-4 text-xl font-bold; }
+  .form-field input:not([type=checkbox]):not([type=file]), .form-field textarea, .form-field select {
+    @apply w-full rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-brand-500 focus:ring-brand-500;
+  }
+  .form-field label { @apply block mb-1 text-sm font-medium; }
+  .form-field .helptext, .form-field .helptext ul { @apply text-xs text-slate-500 mt-1; }
+  .errorlist { @apply text-sm text-red-600 mt-1; }
+}
