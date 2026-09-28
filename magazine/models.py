@@ -1,12 +1,14 @@
 from django.conf import settings
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, SearchVectorField
 from django.core.validators import FileExtensionValidator
-from django.db import models
-from django.db.models import Max, Q
+from django.db import connection, models
+from django.db.models import F, Max, Q, Value
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 
+from .fulltext import build_tsquery
 from .rendering import estimate_reading_time, render_markdown
 from .textutils import expand_query, normalize, strip_code
 
@@ -78,8 +80,19 @@ class ArticleQuerySet(models.QuerySet):
         return self.select_related("category", "author").prefetch_related("tags")
 
     def search(self, query):
-        """Normalized, synonym-aware search: every query term (or one of its synonyms) must match."""
+        """Normalized, synonym-aware search: every query term (or one of its synonyms) must match.
+
+        On PostgreSQL this uses the GIN-indexed full-text vector (and annotates ``rank``),
+        which scales to large archives; elsewhere it falls back to substring matching.
+        """
         groups = expand_query(query)
+        if not groups:
+            return self
+        if connection.vendor == "postgresql":
+            tsquery = build_tsquery(groups)
+            if tsquery:
+                q = SearchQuery(tsquery, search_type="raw", config="simple")
+                return self.filter(search_vector=q).annotate(rank=SearchRank(F("search_vector"), q))
         qs = self
         for group in groups:
             condition = Q()
@@ -157,6 +170,8 @@ class Article(SEOFields):
     notified_at = models.DateTimeField("اطلاع‌رسانی به دنبال‌کنندگان", null=True, blank=True, editable=False)
     ai_generated = models.BooleanField("تولیدشده با AI", default=False, editable=False)
     search_text = models.TextField(blank=True, editable=False)
+    # PostgreSQL full-text vector (title weighted A, everything else D); unused on other databases.
+    search_vector = SearchVectorField(null=True, editable=False)
 
     # AI Daily: "AI Daily #127" with the three standard questions.
     ai_daily_number = models.PositiveIntegerField("شماره AI Daily", null=True, blank=True, unique=True)
@@ -180,6 +195,7 @@ class Article(SEOFields):
         # Read the raw value so deferred-field querysets don't trigger extra queries.
         cover = self.__dict__.get("cover")
         self._original_cover = getattr(cover, "name", cover) or ""
+        self._original_status = self.__dict__.get("status")
 
     def __str__(self):
         return self.display_title
@@ -206,7 +222,9 @@ class Article(SEOFields):
 
             self.cover_variants = build_cover_variants(self.cover)
             Article.objects.filter(pk=self.pk).update(cover_variants=self.cover_variants)
+        self.update_search_vector()
         self._original_cover = self.cover.name if self.cover else ""
+        self._original_status = self.status
 
     def get_absolute_url(self):
         return reverse("magazine:article", args=[self.slug])
@@ -220,6 +238,15 @@ class Article(SEOFields):
     def refresh_search_text(self):
         self.search_text = self.build_search_text()
         Article.objects.filter(pk=self.pk).update(search_text=self.search_text)
+        self.update_search_vector()
+
+    def update_search_vector(self):
+        if connection.vendor != "postgresql" or not self.pk:
+            return
+        Article.objects.filter(pk=self.pk).update(search_vector=(
+            SearchVector(Value(normalize(self.title)), weight="A", config="simple")
+            + SearchVector("search_text", weight="D", config="simple")
+        ))
 
     @property
     def display_title(self):
@@ -308,6 +335,7 @@ class Article(SEOFields):
             )
         articles = Article.objects.published().with_relations().in_bulk(ids)
         return [articles[pk] for pk in ids if pk in articles]
+
 
 class InterviewQA(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="interview_qas")

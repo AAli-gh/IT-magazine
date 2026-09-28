@@ -1,13 +1,12 @@
 import io
 import shutil
 import tempfile
-from unittest import mock
+from unittest import mock, skipUnless
 
 from django.core.cache import cache
-from django.db import connection
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.test import TestCase, override_settings
-from unittest import skipUnless
 from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
@@ -18,6 +17,7 @@ from core.cache import content_version
 from interactions.models import Like, ReadingHistory, TopicFollow
 
 from . import ai_daily, recommender
+from .fulltext import build_tsquery
 from .models import Article, ArticleDailyView, Category, InterviewQA, MediaFile, NewsSource, Tag
 from .rendering import estimate_reading_time, render_markdown
 from .textutils import expand_query, normalize
@@ -59,88 +59,6 @@ class RenderingTests(TestCase):
         self.assertEqual(estimate_reading_time("کلمه " * 1000), 5)
 
 
-class ArticleModelTests(TestCase):
-    def setUp(self):
-        self.cat = Category.objects.create(name="هوش مصنوعی", slug="ai", icon="🤖")
-
-    def test_unicode_slug_is_unique(self):
-        a = make_article(self.cat)
-        b = make_article(self.cat)
-        self.assertEqual(a.slug, "مقاله-آزمایشی")
-        self.assertEqual(b.slug, "مقاله-آزمایشی-2")
-
-    def test_ai_daily_numbering(self):
-        first = make_article(self.cat, title="یک", content_type=Article.ContentType.AI_DAILY)
-        second = make_article(self.cat, title="دو", content_type=Article.ContentType.AI_DAILY)
-        self.assertEqual((first.ai_daily_number, second.ai_daily_number), (1, 2))
-        self.assertEqual(second.display_title, "AI Daily #2 — دو")
-
-    def test_published_excludes_drafts_and_future(self):
-        make_article(self.cat, title="draft", status=Article.Status.DRAFT)
-        make_article(self.cat, title="future", published_at=timezone.now() + timezone.timedelta(days=1))
-        live = make_article(self.cat, title="live")
-        self.assertEqual(list(Article.objects.published()), [live])
-
-    def test_related_prefers_shared_tags(self):
-        other_cat = Category.objects.create(name="وب", slug="web")
-        tag = Tag.objects.create(name="Django")
-        a = make_article(self.cat, title="a")
-        b = make_article(other_cat, title="b")
-        a.tags.add(tag)
-        b.tags.add(tag)
-        self.assertIn(b, a.related())
-
-    def test_youtube_embed(self):
-        a = make_article(self.cat, video_url="https://www.youtube.com/watch?v=abc123&t=5")
-        self.assertEqual(a.video_embed_url, "https://www.youtube.com/embed/abc123")
-
-
-class ViewTests(TestCase):
-    def setUp(self):
-        self.cat = Category.objects.create(name="هوش مصنوعی", slug="ai", icon="🤖", show_on_home=True)
-        self.article = make_article(self.cat, is_featured=True)
-        self.user = User.objects.create_user("ali", "ali@example.com", "pass-12345-x")
-
-    def test_public_pages(self):
-        urls = [
-            reverse("magazine:home"),
-            self.article.get_absolute_url(),
-            reverse("magazine:category", args=["ai"]),
-            reverse("magazine:content_type", args=["article"]),
-            reverse("magazine:ai_daily"),
-            reverse("magazine:search") + "?q=آزمایشی",
-            reverse("rss"),
-            reverse("robots"),
-            "/sitemap.xml",
-            "/api/articles/",
-        ]
-        for url in urls:
-            with self.subTest(url=url):
-                self.assertEqual(self.client.get(url).status_code, 200)
-
-    def test_draft_hidden_from_public(self):
-        draft = make_article(self.cat, title="پیش‌نویس", status=Article.Status.DRAFT)
-        self.assertEqual(self.client.get(draft.get_absolute_url()).status_code, 404)
-
-    def test_search_finds_article(self):
-        response = self.client.get(reverse("magazine:search"), {"q": "آزمایشی"})
-        self.assertContains(response, self.article.title)
-        response = self.client.get(reverse("magazine:search"), {"q": "ناموجود"})
-        self.assertEqual(response.context["page_obj"].paginator.count, 0)
-
-    def test_detail_counts_view_and_records_history(self):
-        self.client.force_login(self.user)
-        self.client.get(self.article.get_absolute_url())
-        self.article.refresh_from_db()
-        self.assertEqual(self.article.views_count, 1)
-        self.assertTrue(ReadingHistory.objects.filter(user=self.user, article=self.article).exists())
-
-    def test_ai_daily_redirect(self):
-        daily = make_article(self.cat, title="روزانه", content_type=Article.ContentType.AI_DAILY)
-        response = self.client.get(reverse("magazine:ai_daily_detail", args=[daily.ai_daily_number]))
-        self.assertRedirects(response, daily.get_absolute_url(), status_code=301)
-
-
 class TextUtilsTests(TestCase):
     def test_normalize_arabic_letters_digits_and_zwnj(self):
         self.assertEqual(normalize("كتاب‌هاي ۱۲"), "کتاب های 12")
@@ -151,6 +69,71 @@ class TextUtilsTests(TestCase):
         self.assertIn("ai", flat)
         self.assertIn("python", flat)
         self.assertIn("tutorial", flat)
+
+    def test_build_tsquery(self):
+        self.assertEqual(build_tsquery([["python", "پایتون"], ["deep learning"]]),
+                         "('python':* | 'پایتون':*) & ('deep':* <-> 'learning':*)")
+
+    def test_build_tsquery_strips_operators(self):
+        query = build_tsquery(expand_query("a' | b & !c:* <-> (d)"))
+        self.assertNotIn("!", query)
+        self.assertNotIn("(d)", query)
+        self.assertEqual(query.count("'"), query.count(":*") * 2)
+
+
+@skipUnless(connection.vendor == "postgresql", "full-text search runs on PostgreSQL")
+class PostgresFullTextTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.cat = Category.objects.create(name="برنامه‌نویسی", slug="programming")
+
+    def test_vector_is_indexed_and_ranks_title_first(self):
+        body_only = make_article(self.cat, title="Weekly roundup", body="python python python")
+        in_title = make_article(self.cat, title="Python packaging", body="wheels")
+        results = list(Article.objects.published().search("python").order_by("-rank"))
+        self.assertEqual(results, [in_title, body_only])
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT indexname FROM pg_indexes WHERE tablename = 'magazine_article'")
+            self.assertIn("magazine_article_search_vector_gin", {row[0] for row in cursor.fetchall()})
+
+    def test_prefix_persian_and_tag_updates(self):
+        article = make_article(self.cat, title="آموزش جنگو", body="ساخت API")
+        self.assertIn(article, Article.objects.search("جنگ"))  # prefix
+        self.assertIn(article, Article.objects.search("django"))  # synonym
+        self.assertNotIn(article, Article.objects.search("kubernetes"))
+        article.tags.add(Tag.objects.create(name="Kubernetes"))
+        self.assertIn(article, Article.objects.search("kubernetes"))  # tags refresh the vector
+
+    def test_search_view_uses_database_rank(self):
+        make_article(self.cat, title="Python tips", body="x")
+        response = self.client.get(reverse("magazine:search"), {"q": "python"})
+        self.assertEqual(response.context["page_obj"].paginator.count, 1)
+
+
+class RecommenderScaleTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.cat = Category.objects.create(name="وب", slug="web")
+
+    @override_settings(RECOMMENDER_MAX_DOCS=3)
+    def test_index_is_capped_to_newest_articles(self):
+        for i in range(5):
+            make_article(self.cat, title=f"Article {i}", published_at=timezone.now() - timezone.timedelta(days=i))
+        index = recommender.build_index()
+        self.assertEqual(len(index.vectors), 3)
+
+    def test_inverted_index_only_scores_overlapping_documents(self):
+        a = make_article(self.cat, title="Rust ownership", body="borrow checker lifetimes")
+        make_article(self.cat, title="Gardening", body="tomatoes soil water")
+        index = recommender.get_index()
+        self.assertEqual(set(index.dot_all(index.vectorize("borrow checker"))), {a.pk})
+
+    def test_similar_results_are_cached(self):
+        a = make_article(self.cat, title="Rust ownership", body="borrow checker")
+        make_article(self.cat, title="Rust lifetimes", body="borrow checker")
+        first = recommender.similar_ids(a)
+        with mock.patch.object(recommender, "get_index", side_effect=AssertionError("not cached")):
+            self.assertEqual(recommender.similar_ids(a), first)
 
 
 class SmartSearchTests(TestCase):
@@ -249,6 +232,16 @@ class ArticleModelTests(TestCase):
         a = make_article(self.cat, video_url="https://www.youtube.com/watch?v=abc123&t=5")
         self.assertEqual(a.video_embed_url, "https://www.youtube.com/embed/abc123")
 
+    def test_related_prefers_shared_tags(self):
+        cache.clear()
+        other_cat = Category.objects.create(name="وب", slug="web")
+        tag = Tag.objects.create(name="Django")
+        a = make_article(self.cat, title="a")
+        b = make_article(other_cat, title="b")
+        a.tags.add(tag)
+        b.tags.add(tag)
+        self.assertIn(b, a.related())
+
 
 class MediaTests(TestCase):
     def setUp(self):
@@ -316,6 +309,10 @@ class ViewTests(TestCase):
     def test_draft_hidden_from_public(self):
         draft = make_article(self.cat, title="پیش‌نویس", status=Article.Status.DRAFT)
         self.assertEqual(self.client.get(draft.get_absolute_url()).status_code, 404)
+
+    def test_search_finds_article(self):
+        response = self.client.get(reverse("magazine:search"), {"q": "آزمایشی"})
+        self.assertContains(response, self.article.title)
 
     def test_empty_search_shows_no_results_message(self):
         response = self.client.get(reverse("magazine:search"), {"q": "ناموجود"})
@@ -425,14 +422,35 @@ class AdminRoleTests(TestCase):
         make_editor(self.editor)
         self.other = make_article(self.cat, title="Someone else", status=Article.Status.DRAFT)
 
-    def _post_article(self, status):
+    def _post_article(self, status, **files):
         return self.client.post(reverse("admin:magazine_article_add"), {
             "title": "مقاله من", "slug": "", "content_type": "article", "category": self.cat.pk,
             "excerpt": "", "body": "متن", "status": status,
             "published_at_0": "2026-01-01", "published_at_1": "10:00:00",
             "media_files-TOTAL_FORMS": "0", "media_files-INITIAL_FORMS": "0",
             "interview_qas-TOTAL_FORMS": "0", "interview_qas-INITIAL_FORMS": "0",
+            **files,
         })
+
+    @override_settings(MAX_VIDEO_UPLOAD_MB=1, MAX_AUDIO_UPLOAD_MB=1)
+    def test_upload_size_limits(self):
+        self.client.force_login(self.editor)
+        big = b"\0" * (1024 * 1024 + 1)
+        with override_settings(MEDIA_ROOT=tempfile.mkdtemp()):
+            response = self._post_article("draft", video_file=SimpleUploadedFile("v.mp4", big, "video/mp4"))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "نباید بیشتر از 1 مگابایت")
+            response = self._post_article("draft", audio_file=SimpleUploadedFile("a.mp3", big, "audio/mpeg"))
+            self.assertContains(response, "نباید بیشتر از 1 مگابایت")
+            self.assertFalse(Article.objects.filter(title="مقاله من").exists())
+            small = SimpleUploadedFile("a.mp3", b"ID3" * 10, "audio/mpeg")
+            self.assertEqual(self._post_article("draft", audio_file=small).status_code, 302)
+
+    @override_settings(MAX_IMAGE_UPLOAD_MB=0)
+    def test_editor_image_upload_limit(self):
+        self.client.force_login(self.editor)
+        response = self.client.post(reverse("magazine:admin_upload"), {"image": image_file("x.jpg", (50, 50))})
+        self.assertEqual(response.status_code, 400)
 
     def test_groups_exist_with_permissions(self):
         self.assertTrue(self.editor.has_perm("magazine.publish_article"))

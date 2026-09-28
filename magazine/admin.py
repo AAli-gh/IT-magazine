@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
@@ -67,11 +68,27 @@ class MediaFileInline(admin.TabularInline):
         return "-"
 
 
+def _check_size(upload, limit_mb, label):
+    # Only newly uploaded files have a known size to check; existing files were checked before.
+    if upload and hasattr(upload, "content_type") and upload.size > limit_mb * 1024 * 1024:
+        raise forms.ValidationError(f"حجم {label} نباید بیشتر از {limit_mb} مگابایت باشد.")
+    return upload
+
+
 class ArticleAdminForm(forms.ModelForm):
     class Meta:
         model = Article
         fields = "__all__"
         widgets = {"body": MarkdownEditorWidget()}
+
+    def clean_video_file(self):
+        return _check_size(self.cleaned_data.get("video_file"), settings.MAX_VIDEO_UPLOAD_MB, "فایل ویدئو")
+
+    def clean_audio_file(self):
+        return _check_size(self.cleaned_data.get("audio_file"), settings.MAX_AUDIO_UPLOAD_MB, "فایل صوتی")
+
+    def clean_cover(self):
+        return _check_size(self.cleaned_data.get("cover"), settings.MAX_IMAGE_UPLOAD_MB, "تصویر")
 
 
 @admin.register(Article)
@@ -167,8 +184,12 @@ class ArticleAdmin(admin.ModelAdmin):
 
     @admin.action(description="ارسال برای بررسی سردبیر")
     def submit_for_review(self, request, queryset):
-        updated = queryset.filter(status=Article.Status.DRAFT).update(status=Article.Status.REVIEW)
-        self.message_user(request, f"{updated} مطلب برای بررسی ارسال شد.")
+        # save() per object so editors get notified (queryset.update skips signals).
+        drafts = list(queryset.filter(status=Article.Status.DRAFT))
+        for article in drafts:
+            article.status = Article.Status.REVIEW
+            article.save()
+        self.message_user(request, f"{len(drafts)} مطلب برای بررسی ارسال شد.")
 
     @admin.action(description="انتشار مطالب انتخاب‌شده", permissions=["publish"])
     def publish(self, request, queryset):

@@ -1,13 +1,21 @@
 """Content-based recommendations and relevance ranking with TF-IDF.
 
-The index is built from published articles (title, tags, category, excerpt, body)
-and cached until content changes (see ``core.cache.content_version``).
+The index is built from the most recent published articles (title, tags, category,
+excerpt, body) and cached until content changes (see ``core.cache.content_version``).
+
+To stay fast as the archive grows:
+- only the newest ``RECOMMENDER_MAX_DOCS`` articles are indexed,
+- each document keeps its ``MAX_TERMS_PER_DOC`` strongest terms,
+- similarity is computed through an inverted index (only documents that share a term
+  with the query are touched, instead of every document),
+- per-article and per-user results are cached.
 """
 
 import difflib
 import math
 from collections import Counter, defaultdict
 
+from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
@@ -17,6 +25,9 @@ from .textutils import strip_code, tokenize
 
 FIELD_WEIGHTS = {"title": 3.0, "tags": 3.0, "category": 1.5, "excerpt": 2.0, "body": 1.0}
 RECENCY_HALF_LIFE_DAYS = 30
+MAX_TERMS_PER_DOC = 80
+RECENT_POOL = 500  # cold-start candidates for personal recommendations
+USER_CACHE_SECONDS = 300
 
 
 def _document_terms(article, tag_names):
@@ -45,21 +56,52 @@ def _cosine(a, b):
     return sum(v * b.get(k, 0.0) for k, v in a.items())
 
 
+def _top_terms(vector, n=MAX_TERMS_PER_DOC):
+    if len(vector) <= n:
+        return vector
+    return _l2(dict(sorted(vector.items(), key=lambda kv: kv[1], reverse=True)[:n]))
+
+
 class Index:
     def __init__(self, vectors, idf, meta):
         self.vectors = vectors  # {article_id: {term: weight}}
         self.idf = idf          # {term: idf}
         self.meta = meta        # {article_id: (category_id, published_at timestamp, title tokens)}
+        self.postings = defaultdict(list)  # {term: [(article_id, weight), ...]}
+        for pk, vector in vectors.items():
+            for term, weight in vector.items():
+                self.postings[term].append((pk, weight))
+        self.recent = [pk for pk, _ in sorted(meta.items(), key=lambda kv: kv[1][1], reverse=True)[:RECENT_POOL]]
+        self._by_prefix = defaultdict(list)  # first letter -> vocabulary (for typo correction)
+        for term in idf:
+            self._by_prefix[term[0]].append(term)
 
     def vectorize(self, text):
         counts = Counter(tokenize(text))
         return _l2({t: (1 + math.log(c)) * self.idf[t] for t, c in counts.items() if t in self.idf})
 
+    def dot_all(self, vector):
+        """Cosine similarity of ``vector`` with every document sharing at least one term."""
+        scores = defaultdict(float)
+        for term, weight in vector.items():
+            for pk, doc_weight in self.postings.get(term, ()):
+                scores[pk] += weight * doc_weight
+        return scores
+
+    def close_terms(self, token):
+        pool = [t for t in self._by_prefix.get(token[0], ()) if abs(len(t) - len(token)) <= 2]
+        return difflib.get_close_matches(token, pool, n=1, cutoff=0.75)
+
 
 def build_index():
     from .models import Article
 
-    articles = list(Article.objects.published().select_related("category").prefetch_related("tags"))
+    max_docs = getattr(settings, "RECOMMENDER_MAX_DOCS", 5000)
+    articles = list(
+        Article.objects.published().select_related("category").prefetch_related("tags")
+        .only("id", "title", "excerpt", "body", "published_at", "category", "category__name")
+        .order_by("-published_at")[:max_docs]
+    )
     term_counts = {a.pk: _document_terms(a, [t.name for t in a.tags.all()]) for a in articles}
     df = Counter()
     for counts in term_counts.values():
@@ -67,7 +109,7 @@ def build_index():
     n = len(articles) or 1
     idf = {term: math.log((1 + n) / (1 + freq)) + 1 for term, freq in df.items()}
     vectors = {
-        pk: _l2({t: (1 + math.log(c)) * idf[t] for t, c in counts.items()})
+        pk: _top_terms(_l2({t: (1 + math.log(c)) * idf[t] for t, c in counts.items()}))
         for pk, counts in term_counts.items()
     }
     meta = {a.pk: (a.category_id, a.published_at.timestamp(), frozenset(tokenize(a.title))) for a in articles}
@@ -89,31 +131,41 @@ def _recency(ts):
 
 
 def similar_ids(article, limit=3):
+    key = f"recommender:similar:{content_version()}:{article.pk}:{limit}"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
     index = get_index()
     vector = index.vectors.get(article.pk)
-    if not vector:
-        return []
-    category_id = article.category_id
-    scores = []
-    for pk, other in index.vectors.items():
-        if pk == article.pk:
-            continue
-        score = _cosine(vector, other)
-        if index.meta[pk][0] == category_id:
-            score += 0.05
-        score += 0.05 * _recency(index.meta[pk][1])
-        scores.append((score, pk))
-    scores.sort(reverse=True)
-    return [pk for score, pk in scores[:limit] if score > 0.06]
+    result = []
+    if vector:
+        scores = []
+        for pk, score in index.dot_all(vector).items():
+            if pk == article.pk:
+                continue
+            if index.meta[pk][0] == article.category_id:
+                score += 0.05
+            score += 0.05 * _recency(index.meta[pk][1])
+            scores.append((score, pk))
+        scores.sort(reverse=True)
+        result = [pk for score, pk in scores[:limit] if score > 0.06]
+    cache.set(key, result, 60 * 60 * 6)
+    return result
 
 
 def for_user_ids(user, limit=6):
     """Personal recommendations from likes, bookmarks, reading history and followed topics."""
     from interactions.models import Bookmark, Like, ReadingHistory, TopicFollow
 
+    key = f"recommender:user:{content_version()}:{user.pk}:{limit}"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+
     index = get_index()
     weights = defaultdict(float)
-    for pk in ReadingHistory.objects.filter(user=user).values_list("article_id", flat=True)[:50]:
+    history = list(ReadingHistory.objects.filter(user=user).values_list("article_id", flat=True)[:200])
+    for pk in history[:50]:
         weights[pk] += 1.0
     for pk in Like.objects.filter(user=user).values_list("article_id", flat=True)[:50]:
         weights[pk] += 3.0
@@ -125,20 +177,24 @@ def for_user_ids(user, limit=6):
     for pk, weight in weights.items():
         for term, value in index.vectors.get(pk, {}).items():
             profile[term] += weight * value
-    profile = _l2(profile) if profile else {}
+    profile = _top_terms(_l2(profile)) if profile else {}
 
-    seen = set(ReadingHistory.objects.filter(user=user).values_list("article_id", flat=True))
+    text_scores = index.dot_all(profile) if profile else {}
+    candidates = set(text_scores) | set(index.recent)
+    seen = set(history)
     scores = []
-    for pk, vector in index.vectors.items():
+    for pk in candidates:
         if pk in seen:
             continue
-        score = _cosine(profile, vector) if profile else 0.0
+        score = text_scores.get(pk, 0.0)
         if index.meta[pk][0] in followed:
             score += 0.15
         score += 0.1 * _recency(index.meta[pk][1])
         scores.append((score, pk))
     scores.sort(reverse=True)
-    return [pk for _, pk in scores[:limit]]
+    result = [pk for _, pk in scores[:limit]]
+    cache.set(key, result, USER_CACHE_SECONDS)
+    return result
 
 
 def rank_ids(query, candidate_ids):
@@ -160,13 +216,12 @@ def rank_ids(query, candidate_ids):
 def correct_query(query):
     """Replace unknown query words with the closest word in the site's vocabulary ("pyton" -> "python")."""
     index = get_index()
-    vocabulary = list(index.idf)
     corrected, changed = [], False
     for token in tokenize(query):
         if token in index.idf or len(token) < 3:
             corrected.append(token)
             continue
-        match = difflib.get_close_matches(token, vocabulary, n=1, cutoff=0.75)
+        match = index.close_terms(token)
         corrected.append(match[0] if match else token)
         changed = changed or bool(match)
     return " ".join(corrected) if changed else ""
@@ -178,5 +233,5 @@ def fuzzy_ids(query, limit=6):
     qvec = index.vectorize(query)
     if not qvec:
         return []
-    scored = sorted(((_cosine(qvec, v), pk) for pk, v in index.vectors.items()), reverse=True)
+    scored = sorted(((score, pk) for pk, score in index.dot_all(qvec).items()), reverse=True)
     return [pk for score, pk in scored[:limit] if score > 0]

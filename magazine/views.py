@@ -159,6 +159,20 @@ def _trigram_suggestions(q):
     )
 
 
+def _ranked(results, q, limit=None):
+    """Order search results by relevance.
+
+    PostgreSQL ranks inside the database (full-text rank, title-weighted), so it stays fast
+    on large archives. Other databases rank in Python with the TF-IDF index.
+    """
+    if connection.vendor == "postgresql" and q:
+        ordered = results.order_by("-rank", "-published_at")
+        return ordered[:limit] if limit else ordered
+    ids = list(results.values_list("pk", flat=True)[: limit * 10 if limit else None])
+    ids = recommender.rank_ids(q, ids)
+    return _by_ids(ids[:limit] if limit else ids)
+
+
 def search(request):
     q = request.GET.get("q", "").strip()[:200]
     category = request.GET.get("category", "")
@@ -177,8 +191,7 @@ def search(request):
         results = results.filter(tags__slug=tag)
 
     if sort == "relevance":
-        ids = recommender.rank_ids(q, list(results.values_list("pk", flat=True)))
-        results = _by_ids(ids)
+        results = _ranked(results, q)
     else:
         results = results.order_by(SORT_OPTIONS[sort][0])
 
@@ -188,8 +201,7 @@ def search(request):
     if q and page_obj is not None and page_obj.paginator.count == 0:
         corrected = recommender.correct_query(q)
         similar = (_trigram_suggestions(q)
-                   or (corrected and _by_ids(recommender.rank_ids(
-                       corrected, list(_published().search(corrected).values_list("pk", flat=True)[:12]))))
+                   or (corrected and list(_ranked(_published().search(corrected), corrected, 12)))
                    or _by_ids(recommender.fuzzy_ids(q)))
 
     context = {
@@ -213,8 +225,7 @@ def search_suggest(request):
     q = request.GET.get("q", "").strip()[:100]
     items = []
     if len(q) >= 2:
-        ids = recommender.rank_ids(q, list(_published().search(q).values_list("pk", flat=True)[:50]))[:6]
-        items = _by_ids(ids)
+        items = list(_ranked(_published().search(q), q, 6))
     return render(request, "magazine/partials/search_suggest.html", {"items": items, "q": q})
 
 
