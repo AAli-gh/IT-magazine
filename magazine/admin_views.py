@@ -1,5 +1,6 @@
 """Staff-only endpoints used by the admin Markdown editor."""
 
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_image_file_extension
@@ -8,8 +9,6 @@ from django.views.decorators.http import require_POST
 
 from .models import Article, MediaFile
 from .rendering import render_markdown
-
-MAX_IMAGE_MB = 10
 
 
 @staff_member_required
@@ -27,8 +26,9 @@ def upload_image(request):
     image = request.FILES.get("image")
     if not image:
         return JsonResponse({"error": "فایلی ارسال نشد"}, status=400)
-    if image.size > MAX_IMAGE_MB * 1024 * 1024:
-        return JsonResponse({"error": f"حداکثر حجم {MAX_IMAGE_MB} مگابایت است"}, status=400)
+    limit_mb = settings.MAX_IMAGE_UPLOAD_MB
+    if image.size > limit_mb * 1024 * 1024:
+        return JsonResponse({"error": f"حداکثر حجم {limit_mb} مگابایت است"}, status=400)
     try:
         validate_image_file_extension(image)
     except ValidationError:

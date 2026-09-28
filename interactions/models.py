@@ -75,6 +75,16 @@ class Comment(models.Model):
         verbose_name = "دیدگاه"
         verbose_name_plural = "دیدگاه‌ها"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remember the approval state as loaded, so moderators are alerted only when a
+        # comment becomes held (see newsletter.signals).
+        self._original_approved = self.__dict__.get("is_approved", True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._original_approved = self.is_approved
+
     def __str__(self):
         return f"{self.user}: {self.body[:40]}"
 

@@ -4,11 +4,13 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
-from core.views import healthz, robots_txt
+from core.views import admin_login, healthz, robots_txt
 from magazine.feeds import CategoryFeed, LatestArticlesFeed, PodcastFeed
 from magazine.sitemaps import sitemaps
 
 urlpatterns = [
+    # Admin sign-in goes through allauth so rate limits and two-factor codes apply.
+    path("admin/login/", admin_login, name="admin_login_redirect"),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("accounts/", include("accounts.urls")),

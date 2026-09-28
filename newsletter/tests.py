@@ -64,6 +64,50 @@ class SendingTests(TestCase):
         self.assertNotIn("قدیمی", mail.outbox[0].body)
 
 
+class EditorAlertTests(TransactionTestCase):
+    """Editors hear about articles waiting for review and comments held for moderation."""
+
+    def setUp(self):
+        from accounts.roles import ensure_roles, make_author, make_editor
+
+        ensure_roles()
+        self.cat = Category.objects.create(name="وب", slug="web")
+        self.editor = User.objects.create_user("chief", "chief@example.com", "pass-12345-x")
+        make_editor(self.editor)
+        self.author = User.objects.create_user("writer", "writer@example.com", "pass-12345-x")
+        make_author(self.author)
+        self.reader = User.objects.create_user("reader", "reader@example.com", "pass-12345-x")
+
+    def test_review_request_notifies_editors_once(self):
+        article = make_article(self.cat, title="پیش‌نویس", status=Article.Status.DRAFT, author=self.author)
+        self.assertFalse(Notification.objects.exists())
+        article.status = Article.Status.REVIEW
+        article.save()
+        note = Notification.objects.get()
+        self.assertEqual((note.user, note.kind), (self.editor, Notification.Kind.REVIEW))
+        self.assertIn(f"/admin/magazine/article/{article.pk}/change/", note.url)
+        self.assertEqual([m.to for m in mail.outbox], [["chief@example.com"]])
+        article.title = "ویرایش در صف بررسی"
+        article.save()  # still in review: no second alert
+        self.assertEqual(Notification.objects.count(), 1)
+
+    def test_ai_generated_draft_in_review_notifies(self):
+        make_article(self.cat, title="AI", status=Article.Status.REVIEW)
+        self.assertEqual(Notification.objects.filter(kind=Notification.Kind.REVIEW).count(), 1)
+
+    def test_held_comment_notifies_moderators(self):
+        article = make_article(self.cat)
+        Notification.objects.all().delete()
+        mail.outbox.clear()
+        Comment.objects.create(article=article, user=self.reader, body="http://a http://b http://c",
+                               is_approved=False, held_reason="لینک زیاد")
+        note = Notification.objects.get(kind=Notification.Kind.MODERATION)
+        self.assertEqual(note.user, self.editor)  # authors can't moderate
+        self.assertIn("لینک زیاد", note.message)
+        Comment.objects.create(article=article, user=self.reader, body="عادی")
+        self.assertEqual(Notification.objects.filter(kind=Notification.Kind.MODERATION).count(), 1)
+
+
 class NotificationTests(TransactionTestCase):
     """TransactionTestCase so on_commit notification hooks actually run."""
 

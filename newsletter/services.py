@@ -125,6 +125,61 @@ def dispatch_pending_notifications():
     return count
 
 
+def editors(permission):
+    """Active users holding a permission directly, through a group, or as superuser."""
+    from django.contrib.auth import get_user_model
+    from django.db.models import Q
+
+    app_label, codename = permission.split(".")
+    has_perm = (
+        Q(groups__permissions__codename=codename, groups__permissions__content_type__app_label=app_label)
+        | Q(user_permissions__codename=codename, user_permissions__content_type__app_label=app_label)
+    )
+    return get_user_model().objects.filter(Q(is_superuser=True) | has_perm, is_active=True).distinct()
+
+
+def notify_editors(permission, kind, message, url, exclude_user_id=None):
+    """In-site notification + email to everyone who can act on the item."""
+    recipients = [u for u in editors(permission) if u.pk != exclude_user_id]
+    message = message[:300]
+    Notification.objects.bulk_create([
+        Notification(user=user, kind=kind, message=message, url=url) for user in recipients
+    ])
+    connection = get_connection()
+    for user in recipients:
+        if not user.email:
+            continue
+        try:
+            _message("editor_alert", {"message": message, "action_url": absolute(url), "user": user},
+                     user.email, message[:150], connection=connection).send()
+        except Exception:
+            logger.exception("Editor alert to %s failed", user.email)
+    return len(recipients)
+
+
+def notify_review_requested(article):
+    from django.urls import reverse
+
+    author = article.author.display_name if article.author else "سیستم (AI)"
+    return notify_editors(
+        "magazine.publish_article", Notification.Kind.REVIEW,
+        f"«{article.display_title}» از {author} در انتظار بررسی است",
+        reverse("admin:magazine_article_change", args=[article.pk]),
+        exclude_user_id=article.author_id,
+    )
+
+
+def notify_comment_held(comment):
+    from django.urls import reverse
+
+    return notify_editors(
+        "interactions.change_comment", Notification.Kind.MODERATION,
+        f"دیدگاه {comment.user.display_name} روی «{comment.article.title}» منتظر تأیید است ({comment.held_reason})",
+        reverse("admin:interactions_comment_change", args=[comment.pk]),
+        exclude_user_id=comment.user_id,
+    )
+
+
 def notify_reply(comment):
     parent = comment.parent
     if not parent or parent.user_id == comment.user_id or not comment.is_approved:

@@ -1,0 +1,6 @@
+{% extends "newsletter/email/base.html" %}
+{% block content %}
+<p>{{ user.display_name }} عزیز،</p>
+<p>{{ message }}</p>
+<p><a href="{{ action_url }}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:12px;text-decoration:none">بررسی در پنل مدیریت</a></p>
+{% endblock %}

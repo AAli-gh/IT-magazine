@@ -1,5 +1,7 @@
+from unittest import mock
+
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
@@ -36,3 +38,54 @@ class SiteSettingsTests(TestCase):
     def test_robots_and_health(self):
         self.assertContains(self.client.get(reverse("robots")), "Sitemap:")
         self.assertContains(self.client.get(reverse("healthz")), "ok")
+
+
+class ErrorPageTests(TestCase):
+    def test_500_page_is_self_contained(self):
+        from django.test import RequestFactory
+        from django.views.defaults import server_error
+
+        response = server_error(RequestFactory().get("/"))
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("مشکلی در سرور پیش آمد".encode(), response.content)
+        self.assertIn(b'dir="rtl"', response.content)
+
+    @override_settings(DEBUG=False)
+    def test_unhandled_error_uses_500_template(self):
+        client = self.client_class(raise_request_exception=False)
+        with mock.patch("magazine.views._published", side_effect=RuntimeError("boom")):
+            response = client.get(reverse("magazine:home"))
+        self.assertEqual(response.status_code, 500)
+        self.assertContains(response, "مشکلی در سرور پیش آمد", status_code=500)
+
+
+class AdminSecurityTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_superuser("boss", "boss@example.com", "pass-12345-x")
+
+    def test_admin_login_goes_through_allauth(self):
+        response = self.client.get("/admin/login/?next=/admin/magazine/")
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith(reverse("account_login")))
+        self.assertIn("next=%2Fadmin%2Fmagazine%2F", response["Location"])
+
+    @override_settings(ADMIN_REQUIRE_MFA=True)
+    def test_staff_must_enable_2fa_for_admin(self):
+        from allauth.mfa.models import Authenticator
+
+        self.client.force_login(self.staff)
+        response = self.client.get(reverse("admin:index"))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith(reverse("mfa_activate_totp")))
+        # The public site stays reachable without 2FA.
+        self.assertEqual(self.client.get(reverse("magazine:home")).status_code, 200)
+
+        Authenticator.objects.create(user=self.staff, type=Authenticator.Type.TOTP, data={})
+        self.assertEqual(self.client.get(reverse("admin:index")).status_code, 200)
+
+    def test_2fa_setup_page_renders(self):
+        # Log in through allauth: setting up 2FA requires a recent real login.
+        self.client.post(reverse("account_login"), {"login": "boss", "password": "pass-12345-x"})
+        response = self.client.get(reverse("mfa_activate_totp"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'dir="rtl"')

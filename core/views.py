@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import connection
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
@@ -27,6 +27,14 @@ def robots_txt(request):
         f"Sitemap: {sitemap}",
     ]
     return HttpResponse("\n".join(lines) + "\n", content_type="text/plain")
+
+
+def admin_login(request):
+    """Send the admin login form to allauth (which handles 2FA), then back to the admin."""
+    from urllib.parse import urlencode
+
+    next_url = request.GET.get("next") or reverse("admin:index")
+    return redirect(f"{reverse('account_login')}?{urlencode({'next': next_url})}")
 
 
 def healthz(request):

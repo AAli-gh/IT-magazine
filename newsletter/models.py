@@ -60,6 +60,8 @@ class Notification(models.Model):
     class Kind(models.TextChoices):
         NEW_ARTICLE = "new_article", "مطلب جدید"
         REPLY = "reply", "پاسخ به دیدگاه"
+        REVIEW = "review", "مطلب در انتظار بررسی"
+        MODERATION = "moderation", "دیدگاه در انتظار تأیید"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     kind = models.CharField(max_length=20, choices=Kind.choices)

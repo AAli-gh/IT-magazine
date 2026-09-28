@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}دسترسی ندارید | {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="text-center py-24">
+  <p class="text-7xl font-black text-slate-300 dark:text-slate-700">۴۰۳</p>
+  <p class="mt-4 text-xl font-bold">اجازه دسترسی به این صفحه را ندارید.</p>
+  <div class="mt-6 flex justify-center gap-2">
+    <a href="{% url 'magazine:home' %}" class="btn-primary">صفحه اصلی</a>
+    {% if not user.is_authenticated %}<a href="{% url 'account_login' %}?next={{ request.path|urlencode }}" class="btn-ghost">ورود</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

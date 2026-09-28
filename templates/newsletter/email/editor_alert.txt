@@ -1,0 +1,5 @@
+{{ user.display_name }} عزیز،
+
+{{ message }}
+
+بررسی در پنل مدیریت: {{ action_url }}

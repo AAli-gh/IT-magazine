@@ -43,6 +43,23 @@ services:
     depends_on:
       - web
 
+  backup:
+    # Daily pg_dump + media archive into ./backups on the host (copy that folder off-site).
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-itmag}
+      POSTGRES_USER: ${POSTGRES_USER:-itmag}
+    command: sh /backup.sh
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+      - media:/media:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped

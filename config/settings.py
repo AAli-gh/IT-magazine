@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.mfa",
     "allauth.socialaccount.providers.github",
     "allauth.socialaccount.providers.google",
     "accounts",
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "core.middleware.AdminMFAMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -122,6 +124,12 @@ ACCOUNT_RATE_LIMITS = {"login_failed": "5/5m/ip,5/5m/key", "signup": "10/h/ip"}
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_LOGIN_ON_GET = False
+
+# Two-factor authentication (authenticator app + recovery codes).
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
+MFA_TOTP_ISSUER = os.environ.get("SITE_NAME", "IT Magazine")
+# Staff must enable 2FA before using the admin panel (on by default in production).
+ADMIN_REQUIRE_MFA = env_bool("ADMIN_REQUIRE_MFA", not DEBUG)
 
 # OAuth apps are configured from the environment; a provider without credentials is hidden.
 SOCIALACCOUNT_PROVIDERS = {}
@@ -198,6 +206,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 MAX_VIDEO_UPLOAD_MB = int(os.environ.get("MAX_VIDEO_UPLOAD_MB", 500))
 MAX_AUDIO_UPLOAD_MB = int(os.environ.get("MAX_AUDIO_UPLOAD_MB", 200))
+MAX_IMAGE_UPLOAD_MB = int(os.environ.get("MAX_IMAGE_UPLOAD_MB", 10))
 
 # --- AI features (Claude API). Without ANTHROPIC_API_KEY, AI Daily generation is disabled. ---
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5")
@@ -212,6 +221,24 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
 }
+
+# --- Error reporting ---
+# Unhandled errors are emailed to ADMINS (e.g. "Ali:ali@example.com,ops@example.com")...
+ADMINS = [
+    tuple(item.split(":", 1)) if ":" in item else (item, item)
+    for item in env_list("DJANGO_ADMINS")
+]
+SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+# ...and sent to Sentry (or a self-hosted GlitchTip) when SENTRY_DSN is set.
+if os.environ.get("SENTRY_DSN"):
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DSN"],
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "production" if not DEBUG else "development"),
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+        send_default_pii=False,
+    )
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True

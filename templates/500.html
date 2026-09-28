@@ -1,0 +1,28 @@
+{% load static %}<!doctype html>
+{# Rendered without request context or database access: keep this page self-contained. #}
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>خطای سرور | مجله فناوری</title>
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  <script>
+    try {
+      const t = localStorage.getItem("theme");
+      if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+    } catch (e) {}
+  </script>
+</head>
+<body class="min-h-screen grid place-items-center bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans px-4">
+  <main class="text-center max-w-md">
+    <p class="text-7xl font-black text-slate-300 dark:text-slate-700">۵۰۰</p>
+    <h1 class="mt-4 text-xl font-bold">مشکلی در سرور پیش آمد</h1>
+    <p class="mt-2 text-slate-500 leading-7">خطا ثبت شد و تیم فنی بررسی می‌کند. چند لحظه دیگر دوباره تلاش کنید.</p>
+    <div class="mt-6 flex justify-center gap-2">
+      <a href="/" class="btn-primary">صفحه اصلی</a>
+      <button type="button" class="btn-ghost" onclick="location.reload()">تلاش دوباره</button>
+    </div>
+  </main>
+</body>
+</html>
