@@ -115,7 +115,7 @@ class BrowserTests(StaticLiveServerTestCase):
             for path in paths:
                 with self.subTest(path=path, width=width):
                     self.page.goto(self.url(path))
-                    expect(self.page.locator("header")).to_be_visible()
+                    expect(self.page.get_by_role("banner")).to_be_visible()  # the site header
                     expect(self.page.locator("main")).to_be_visible()
                     self.assert_no_horizontal_scroll()
         self.assert_no_js_errors()
