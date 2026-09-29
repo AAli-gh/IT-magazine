@@ -494,3 +494,32 @@ class AdminRoleTests(TestCase):
     def test_editor_endpoints_require_staff(self):
         response = self.client.post(reverse("magazine:admin_preview"), {"text": "x"})
         self.assertEqual(response.status_code, 302)
+
+
+class ShowcaseTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.mkdtemp()
+        self.override = override_settings(MEDIA_ROOT=self.media_root)
+        self.override.enable()
+
+    def tearDown(self):
+        self.override.disable()
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def test_replaces_placeholders_and_is_idempotent(self):
+        from django.core.management import call_command
+
+        from .showcase import ARTICLES
+
+        call_command("seed_magazine", "--demo", stdout=io.StringIO())
+        call_command("load_showcase", stdout=io.StringIO())
+        call_command("load_showcase", stdout=io.StringIO())
+
+        self.assertEqual(Article.objects.count(), len(ARTICLES))
+        self.assertEqual(Article.objects.filter(is_featured=True).count(), 1)
+        self.assertFalse(Article.objects.filter(cover="").exists())
+        dailies = list(Article.objects.filter(content_type=Article.ContentType.AI_DAILY).order_by("ai_daily_number"))
+        self.assertEqual([a.ai_daily_number for a in dailies], [1, 2, 3])
+        self.assertEqual(dailies, sorted(dailies, key=lambda a: a.published_at))  # newest issue has the top number
+        for article in Article.objects.all():
+            self.assertEqual(self.client.get(article.get_absolute_url()).status_code, 200, article.title)
