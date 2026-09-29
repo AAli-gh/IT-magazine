@@ -12,6 +12,15 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Hosts without a process manager (e.g. PythonAnywhere) keep settings in BASE_DIR/.env;
+# variables already set in the environment win.
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover
+    pass
+else:
+    load_dotenv(BASE_DIR / ".env", override=False)
+
 
 def env_bool(name, default=False):
     return os.environ.get(name, str(default)).lower() in {"1", "true", "yes", "on"}
