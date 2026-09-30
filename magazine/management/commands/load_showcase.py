@@ -1,4 +1,4 @@
-"""Replace the placeholder demo posts with real showcase articles and generated covers.
+"""Replace the placeholder demo posts with real showcase articles and cover photos.
 
     python manage.py load_showcase           # add missing showcase articles
     python manage.py load_showcase --update  # also rewrite existing ones (body, excerpt, cover)
@@ -7,6 +7,7 @@
 import io
 import zlib
 from datetime import timedelta
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -18,7 +19,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 from magazine.management.commands.seed_magazine import DEMO_BODY
 from magazine.models import Article, Category, Tag
-from magazine.showcase import ARTICLES
+from magazine.showcase import ARTICLES, PHOTOS
+
+PHOTO_DIR = Path(__file__).resolve().parents[2] / "showcase_photos"
 
 COVER_SIZE = (1440, 810)
 # Gradient start/end colours per category.
@@ -90,8 +93,16 @@ def make_cover(label, category_slug):
     return ContentFile(buffer.getvalue())
 
 
+def cover_for(item):
+    """The article's Unsplash photo when we ship one, otherwise a generated graphic."""
+    photo = PHOTO_DIR / f"{PHOTOS.get(item['title'], '')}.jpg"
+    if photo.is_file():
+        return ContentFile(photo.read_bytes())
+    return make_cover(item["label"], item["category"])
+
+
 class Command(BaseCommand):
-    help = "Replace placeholder demo posts with real showcase articles (with generated covers)."
+    help = "Replace placeholder demo posts with real showcase articles (with cover photos)."
 
     def add_arguments(self, parser):
         parser.add_argument("--update", action="store_true", help="Rewrite showcase articles that already exist.")
@@ -135,8 +146,7 @@ class Command(BaseCommand):
             article.status = Article.Status.PUBLISHED
             if is_new:
                 article.published_at = now - timedelta(hours=index * 13 + 1)
-            article.cover.save(f"{item['category']}-{index}.jpg", make_cover(item["label"], item["category"]),
-                               save=False)
+            article.cover.save(f"{item['category']}-{index}.jpg", cover_for(item), save=False)
             article.save()
             article.tags.set([Tag.objects.get_or_create(name=name)[0] for name in item["tags"]])
             # Spread view counts so the «popular» box has a stable, varied order.

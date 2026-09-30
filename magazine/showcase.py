@@ -1510,3 +1510,8 @@ DRF یک رابط وب قابل‌مرور هم دارد؛ آدرس API را د�
 """,
     ),
 ]
+
+# Newer articles first so they get the most recent publish dates.
+from .showcase_extra import EXTRA_ARTICLES, PHOTOS  # noqa: E402
+
+ARTICLES = EXTRA_ARTICLES + ARTICLES

@@ -509,7 +509,12 @@ class ShowcaseTests(TestCase):
     def test_replaces_placeholders_and_is_idempotent(self):
         from django.core.management import call_command
 
-        from .showcase import ARTICLES
+        from .management.commands.load_showcase import PHOTO_DIR
+        from .showcase import ARTICLES, PHOTOS
+
+        self.assertEqual({a["title"] for a in ARTICLES}, set(PHOTOS))  # every article has a photo
+        for photo_id in PHOTOS.values():
+            self.assertTrue((PHOTO_DIR / f"{photo_id}.jpg").is_file(), photo_id)
 
         call_command("seed_magazine", "--demo", stdout=io.StringIO())
         call_command("load_showcase", stdout=io.StringIO())
@@ -519,7 +524,7 @@ class ShowcaseTests(TestCase):
         self.assertEqual(Article.objects.filter(is_featured=True).count(), 1)
         self.assertFalse(Article.objects.filter(cover="").exists())
         dailies = list(Article.objects.filter(content_type=Article.ContentType.AI_DAILY).order_by("ai_daily_number"))
-        self.assertEqual([a.ai_daily_number for a in dailies], [1, 2, 3])
+        self.assertEqual([a.ai_daily_number for a in dailies], list(range(1, len(dailies) + 1)))
         self.assertEqual(dailies, sorted(dailies, key=lambda a: a.published_at))  # newest issue has the top number
         for article in Article.objects.all():
             self.assertEqual(self.client.get(article.get_absolute_url()).status_code, 200, article.title)
