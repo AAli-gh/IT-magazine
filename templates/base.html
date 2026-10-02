@@ -13,8 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ SITE_NAME }}">
   <meta property="og:description" content="{{ SITE_DESCRIPTION }}">
-  {% if site_settings.default_og_image %}<meta property="og:image" content="{{ SITE_URL }}{{ site_settings.default_og_image.url }}">{% endif %}
+  <meta property="og:image" content="{% if site_settings.default_og_image %}{{ SITE_URL }}{{ site_settings.default_og_image.url }}{% else %}{{ SITE_URL }}{% static 'brand/og-default.jpg' %}{% endif %}">
   {% endblock %}
+  <link rel="icon" href="{% static 'brand/favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'brand/logo.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'brand/apple-touch-icon.png' %}">
+  <meta name="theme-color" content="#2563eb">
   <link rel="alternate" type="application/rss+xml" title="{{ SITE_NAME }}" href="{% url 'rss' %}">
 
   <script>

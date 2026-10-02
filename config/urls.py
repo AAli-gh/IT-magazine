@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
-from core.views import admin_login, healthz, robots_txt
+from core.views import admin_login, favicon, healthz, robots_txt
 from magazine.feeds import CategoryFeed, LatestArticlesFeed, PodcastFeed
 from magazine.sitemaps import sitemaps
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path("rss/<str:slug>/", CategoryFeed(), name="category_rss"),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
     path("robots.txt", robots_txt, name="robots"),
+    path("favicon.ico", favicon, name="favicon"),
     path("healthz", healthz, name="healthz"),
     path("", include("newsletter.urls")),
     path("", include("core.urls")),

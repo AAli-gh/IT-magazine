@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.templatetags.static import static
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
@@ -14,6 +15,12 @@ def page_detail(request, slug):
 
 
 @require_GET
+@require_GET
+def favicon(request):
+    """Browsers request /favicon.ico directly; point them at the static icon."""
+    return redirect(static("brand/favicon.ico"), permanent=True)
+
+
 def robots_txt(request):
     sitemap = settings.SITE_URL.rstrip("/") + reverse("django.contrib.sitemaps.views.sitemap")
     lines = [

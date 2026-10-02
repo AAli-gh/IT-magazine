@@ -89,3 +89,49 @@ class AdminSecurityTests(TestCase):
         response = self.client.get(reverse("mfa_activate_totp"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'dir="rtl"')
+
+
+class BrandingAndPagesTests(TestCase):
+    def test_favicon_and_default_share_image(self):
+        response = self.client.get("/favicon.ico")
+        self.assertEqual(response.status_code, 301)
+        self.assertIn("brand/favicon.ico", response["Location"])
+        home = self.client.get(reverse("magazine:home"))
+        self.assertContains(home, "brand/og-default.jpg")
+        self.assertContains(home, "brand/logo.svg")
+
+    def test_seed_adds_legal_pages_to_footer(self):
+        import io
+
+        from django.core.management import call_command
+
+        call_command("seed_magazine", stdout=io.StringIO())
+        home = self.client.get(reverse("magazine:home"))
+        for slug, title in (("privacy", "حریم خصوصی"), ("terms", "قوانین استفاده")):
+            self.assertContains(home, title)
+            self.assertEqual(self.client.get(reverse("core:page", args=[slug])).status_code, 200)
+
+
+class BackupTests(TestCase):
+    def test_backup_contains_data_and_media(self):
+        import io
+        import tempfile
+        import zipfile
+        from pathlib import Path
+
+        from django.core.management import call_command
+
+        User.objects.create_user("reader", "reader@example.com", "pass-12345-x")
+        with tempfile.TemporaryDirectory() as media, tempfile.TemporaryDirectory() as out:
+            (Path(media) / "covers").mkdir()
+            (Path(media) / "covers" / "a.jpg").write_bytes(b"img")
+            with override_settings(MEDIA_ROOT=media):
+                for _ in range(3):
+                    call_command("backup_site", output_dir=out, keep=2, stdout=io.StringIO())
+            backups = sorted(Path(out).glob("itmag-*.zip"))
+            self.assertLessEqual(len(backups), 2)
+            with zipfile.ZipFile(backups[-1]) as archive:
+                names = archive.namelist()
+                self.assertIn("data.json", names)
+                self.assertIn("media/covers/a.jpg", names)
+                self.assertIn("reader@example.com", archive.read("data.json").decode())
