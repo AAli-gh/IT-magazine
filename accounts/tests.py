@@ -49,3 +49,31 @@ class AccountTests(TestCase):
         user.refresh_from_db()
         self.assertFalse(user.email_notifications)
         self.assertEqual(user.first_name, "نیما")
+
+
+class PersianEmailTests(TestCase):
+    def assert_persian_html(self, message):
+        html = dict((mime, body) for body, mime in message.alternatives)["text/html"]
+        self.assertIn('dir="rtl"', html)
+        return html
+
+    def test_password_reset_email_is_persian_and_rtl(self):
+        User.objects.create_user("reader", "reader@example.com", "pass-12345-x")
+        self.client.post(reverse("account_reset_password"), {"email": "reader@example.com"})
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.subject, "بازیابی رمز عبور")
+        self.assertIn("درخواست بازیابی رمز عبور", message.body)
+        self.assertIn("/accounts/password/reset/key/", message.body)
+        html = self.assert_persian_html(message)
+        self.assertIn("انتخاب رمز جدید", html)
+
+    def test_signup_confirmation_email_is_persian(self):
+        self.client.post(reverse("account_signup"), {
+            "username": "newbie", "email": "newbie@example.com",
+            "password1": "a-Strong-pass-987", "password2": "a-Strong-pass-987",
+        })
+        message = mail.outbox[-1]
+        self.assertEqual(message.subject, "تأیید آدرس ایمیل")
+        self.assertIn("newbie", message.body)
+        self.assertIn("تأیید ایمیل", self.assert_persian_html(message))
