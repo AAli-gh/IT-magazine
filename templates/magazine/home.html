@@ -37,7 +37,7 @@
     {% if latest %}
     <section>
       <div class="section-title"><h2>🆕 جدیدترین مطالب</h2><a href="{% url 'magazine:search' %}?sort=new" class="text-sm text-brand-600 font-normal">همه ←</a></div>
-      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      <div class="grid gap-3 sm:gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {% for article in latest %}{% include "partials/article_card.html" %}{% endfor %}
       </div>
     </section>
@@ -46,7 +46,7 @@
     {% if for_you %}
     <section>
       <div class="section-title"><h2>✨ پیشنهاد برای شما</h2><a href="{% url 'magazine:for_you' %}" class="text-sm text-brand-600 font-normal">بیشتر ←</a></div>
-      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-3 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {% for article in for_you %}{% include "partials/article_card.html" %}{% endfor %}
       </div>
     </section>
@@ -61,7 +61,7 @@
         <a href="{{ category.get_absolute_url }}" class="text-sm text-brand-600 font-normal">مشاهده همه ←</a>
       </div>
       {% if category.description %}<p class="-mt-2 mb-4 text-sm text-slate-500">{{ category.description }}</p>{% endif %}
-      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-3 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {% for article in items %}{% include "partials/article_card.html" %}{% endfor %}
       </div>
     </section>
@@ -70,7 +70,7 @@
     {% if tutorials %}
     <section>
       <div class="section-title"><h2>📚 آموزش‌های منتخب</h2><a href="{% url 'magazine:content_type' 'tutorial' %}" class="text-sm text-brand-600 font-normal">همه آموزش‌ها ←</a></div>
-      <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-3 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {% for article in tutorials %}{% include "partials/article_card.html" %}{% endfor %}
       </div>
     </section>

@@ -120,6 +120,18 @@ class BrowserTests(StaticLiveServerTestCase):
                     self.assert_no_horizontal_scroll()
         self.assert_no_js_errors()
 
+    def test_cards_are_compact_rows_on_phones(self):
+        make_article(self.category, title="مطلب دوم", body="متن", excerpt="خلاصه")
+        self.page.set_viewport_size({"width": 390, "height": 900})
+        self.page.goto(self.url("/category/ai/"))
+        card = self.page.locator("main article.card").first
+        thumb = card.locator("a").first.bounding_box()
+        box = card.bounding_box()
+        self.assertLess(thumb["width"], box["width"] / 2)  # thumbnail beside the text, not above it
+        self.page.set_viewport_size({"width": 1280, "height": 900})
+        thumb = card.locator("a").first.bounding_box()
+        self.assertGreater(thumb["width"], card.bounding_box()["width"] * 0.9)  # full-width cover on desktop
+
     def test_theme_toggle_persists(self):
         self.page.goto(self.url("/"))
         html = self.page.locator("html")
