@@ -20,8 +20,15 @@
       const open = menu.classList.toggle("hidden") === false;
       toggle.setAttribute("aria-expanded", String(open));
     });
+    const close = () => {
+      menu.classList.add("hidden");
+      toggle.setAttribute("aria-expanded", "false");
+    };
     document.addEventListener("click", (e) => {
-      if (!root.contains(e.target)) menu.classList.add("hidden");
+      if (!root.contains(e.target)) close();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") close();
     });
   });
 

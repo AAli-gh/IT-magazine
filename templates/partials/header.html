@@ -22,12 +22,13 @@
     <nav class="mr-auto flex items-center gap-1 text-sm">
       <div class="relative" data-dropdown>
         <button type="button" class="btn-ghost" data-dropdown-toggle aria-expanded="false" aria-label="دسته‌بندی‌ها"><span class="hidden sm:inline">دسته‌بندی‌ها</span> ▾</button>
-        <div class="hidden absolute left-0 mt-2 w-72 card p-2 shadow-xl grid grid-cols-1 max-h-[70vh] overflow-y-auto" data-dropdown-menu>
+        {# Phones: full-width panel under the header (the toggle sits mid-screen, so an anchored menu would overflow). #}
+        <div class="hidden fixed inset-x-3 top-[4.25rem] sm:absolute sm:inset-x-auto sm:top-auto sm:left-0 sm:mt-2 sm:w-72 card p-2 shadow-xl grid grid-cols-2 sm:grid-cols-1 gap-x-1 text-[13px] sm:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
           {% for cat in nav_categories %}
           <a href="{{ cat.get_absolute_url }}" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800">{{ cat.icon }} {{ cat.name }}</a>
           {% endfor %}
-          <hr class="my-2 border-slate-200 dark:border-slate-800">
-          <a href="{% url 'magazine:ai_daily' %}" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold">🤖 AI Daily</a>
+          <hr class="col-span-2 sm:col-span-1 my-2 border-slate-200 dark:border-slate-800">
+          <a href="{% url 'magazine:ai_daily' %}" class="col-span-2 sm:col-span-1 rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold">🤖 AI Daily</a>
         </div>
       </div>
       <a href="{% url 'magazine:search' %}" class="md:hidden btn-ghost" aria-label="جستجو">🔍</a>

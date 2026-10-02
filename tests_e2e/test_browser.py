@@ -158,6 +158,19 @@ class BrowserTests(StaticLiveServerTestCase):
         self.page.evaluate("document.body.click()")  # click outside the menu
         expect(menu).to_be_hidden()
 
+    def test_categories_menu_fits_phone_screen_when_logged_in(self):
+        self.login(self.verified_user())  # logged-in header has more buttons, pushing the toggle inward
+        for width in (360, 412):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({"width": width, "height": 800})
+                self.page.goto(self.url("/"))
+                self.page.click("[data-dropdown-toggle]")
+                box = self.page.locator("[data-dropdown-menu]").bounding_box()
+                self.assertGreaterEqual(box["x"], 0)
+                self.assertLessEqual(box["x"] + box["width"], width)
+                self.page.keyboard.press("Escape")
+                expect(self.page.locator("[data-dropdown-menu]")).to_be_hidden()
+
     # --- search ---
 
     def test_header_search_suggestions(self):
