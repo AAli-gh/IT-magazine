@@ -89,6 +89,7 @@ class SiteSettings(models.Model):
     default_og_image = models.ImageField("تصویر پیش‌فرض اشتراک‌گذاری (OG)", upload_to="site/", blank=True)
     contact_email = models.EmailField("ایمیل تماس", blank=True)
     telegram_url = models.URLField("تلگرام", blank=True)
+    instagram_url = models.URLField("اینستاگرام", blank=True)
     twitter_url = models.URLField("ایکس (توییتر)", blank=True)
     linkedin_url = models.URLField("لینکدین", blank=True)
     github_url = models.URLField("گیت‌هاب", blank=True)

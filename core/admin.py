@@ -29,7 +29,7 @@ class BannerAdmin(admin.ModelAdmin):
 class SiteSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
         ("هویت و SEO", {"fields": ("site_name", "site_description", "default_og_image")}),
-        ("شبکه‌های اجتماعی و تماس", {"fields": ("contact_email", "telegram_url", "twitter_url", "linkedin_url", "github_url")}),
+        ("شبکه‌های اجتماعی و تماس", {"fields": ("contact_email", "instagram_url", "telegram_url", "twitter_url", "linkedin_url", "github_url")}),
         ("دیدگاه‌ها", {"fields": ("comments_require_approval", "banned_words")}),
         ("AI Daily", {"fields": ("ai_daily_auto_publish",)}),
         ("پیشرفته", {"fields": ("head_scripts",), "classes": ("collapse",)}),

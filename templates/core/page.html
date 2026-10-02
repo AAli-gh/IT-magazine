@@ -5,5 +5,29 @@
 <article class="mx-auto max-w-3xl card p-8">
   <h1 class="text-3xl font-extrabold mb-6">{{ page.title }}</h1>
   <div class="prose prose-slate dark:prose-invert max-w-none leading-8">{{ page.body_html|safe }}</div>
+  {% if page.slug == "contact" %}
+  {% with s=site_settings %}{% if s.contact_email or s.instagram_url or s.telegram_url %}
+  <div class="mt-8 grid gap-3 sm:grid-cols-2">
+    {% if s.contact_email %}
+    <a href="mailto:{{ s.contact_email }}" class="card p-4 flex items-center gap-3 hover:border-brand-500">
+      <span class="text-2xl">✉️</span>
+      <span><span class="block font-bold">ایمیل</span><span class="block text-sm text-slate-500" dir="ltr">{{ s.contact_email }}</span></span>
+    </a>
+    {% endif %}
+    {% if s.instagram_url %}
+    <a href="{{ s.instagram_url }}" rel="noopener" target="_blank" class="card p-4 flex items-center gap-3 hover:border-brand-500">
+      <span class="text-2xl">📷</span>
+      <span><span class="block font-bold">اینستاگرام</span><span class="block text-sm text-slate-500" dir="ltr">{{ s.instagram_url|cut:"https://www.instagram.com/"|cut:"/" }}</span></span>
+    </a>
+    {% endif %}
+    {% if s.telegram_url %}
+    <a href="{{ s.telegram_url }}" rel="noopener" target="_blank" class="card p-4 flex items-center gap-3 hover:border-brand-500">
+      <span class="text-2xl">✈️</span>
+      <span><span class="block font-bold">تلگرام</span><span class="block text-sm text-slate-500" dir="ltr">{{ s.telegram_url }}</span></span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}{% endwith %}
+  {% endif %}
 </article>
 {% endblock %}

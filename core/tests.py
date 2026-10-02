@@ -135,3 +135,24 @@ class BackupTests(TestCase):
                 self.assertIn("data.json", names)
                 self.assertIn("media/covers/a.jpg", names)
                 self.assertIn("reader@example.com", archive.read("data.json").decode())
+
+
+class ContactLinksTests(TestCase):
+    def test_instagram_and_email_in_footer_and_contact_page(self):
+        import io
+
+        from django.core.management import call_command
+
+        call_command("seed_magazine", stdout=io.StringIO())
+        settings_obj = SiteSettings.load()
+        settings_obj.contact_email = "team@example.com"
+        settings_obj.instagram_url = "https://www.instagram.com/example_co/"
+        settings_obj.save()
+        cache.clear()
+
+        home = self.client.get(reverse("magazine:home"))
+        self.assertContains(home, 'href="https://www.instagram.com/example_co/"')
+        self.assertContains(home, 'href="mailto:team@example.com"')
+        contact = self.client.get(reverse("core:page", args=["contact"]))
+        self.assertContains(contact, "example_co")
+        self.assertContains(contact, "team@example.com")
