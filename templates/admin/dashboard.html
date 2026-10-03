@@ -3,17 +3,19 @@
 
 {% block extrastyle %}{{ block.super }}
 <style>
-  :root { --dash-bar: #2563eb; --dash-bar-hover: #1d4ed8; --dash-muted: var(--body-quiet-color, #64748b); --dash-card: var(--darkened-bg, #f8f8f8); }
+  :root { --dash-bar: #2563eb; --dash-bar-hover: #1d4ed8; --dash-muted: var(--body-quiet-color, #64748b); --dash-card: var(--body-bg, #fff); }
   @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) { --dash-bar: #60a5fa; --dash-bar-hover: #93c5fd; } }
   html[data-theme="dark"] { --dash-bar: #60a5fa; --dash-bar-hover: #93c5fd; }
   .dash { margin-bottom: 24px; }
   .dash-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .dash-tile { background: var(--dash-card); border-radius: 10px; padding: 14px 16px; }
+  .dash-tile { background: var(--dash-card); border: 1px solid var(--hairline-color); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow, none); }
+  .dash-tile:first-child { background: linear-gradient(135deg, #2563eb, #6d28d9); border: 0; }
+  .dash-tile:first-child b, .dash-tile:first-child span { color: #fff; }
   .dash-tile b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; color: var(--body-fg); }
   .dash-tile span { font-size: 12px; color: var(--dash-muted); }
   .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
   @media (max-width: 1100px) { .dash-grid { grid-template-columns: 1fr; } }
-  .dash-card { background: var(--dash-card); border-radius: 10px; padding: 16px; min-width: 0; }
+  .dash-card { background: var(--dash-card); border: 1px solid var(--hairline-color); border-radius: 16px; padding: 16px; min-width: 0; box-shadow: var(--shadow, none); }
   .dash-card h2 { margin: 0 0 12px; font-size: 14px; background: none; color: var(--body-fg); padding: 0; text-transform: none; letter-spacing: 0; }
   .dash-chart { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--hairline-color, #e5e7eb); direction: ltr; }
   .dash-bar { flex: 1; position: relative; height: 100%; display: flex; align-items: flex-end; }

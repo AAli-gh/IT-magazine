@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<link rel="preload" href="{% static 'vendor/vazirmatn/Vazirmatn-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'admin/theme.css' %}">
+<link rel="icon" href="{% static 'brand/favicon.ico' %}" sizes="any">
+<link rel="icon" href="{% static 'brand/logo.svg' %}" type="image/svg+xml">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">
+    <span class="itm-logo" aria-hidden="true">IT</span>
+    <span>{{ site_header|default:_('Django administration') }}<span class="itm-sub">IT Magazine · Admin</span></span>
+  </a>
+</div>
+{% if user.is_anonymous %}
+  {% include "admin/color_theme_toggle.html" %}
+{% endif %}
+{% endblock %}
+
+{% block welcome-msg %}<span class="itm-welcome">👋 {% firstof user.get_short_name user.get_username %}</span>{% endblock %}
+
+{% block userlinks %}
+{% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">🔑 تغییر گذرواژه</a>{% endif %}
+<form id="logout-form" method="post" action="{% url 'admin:logout' %}">
+  {% csrf_token %}
+  <button type="submit">↩️ خروج</button>
+</form>
+{% include "admin/color_theme_toggle.html" %}
+{% endblock %}
+
+{% block nav-global %}
+{% if user.is_active and user.is_staff %}
+<nav class="itm-quick" aria-label="دسترسی سریع">
+  {% if perms.magazine.add_article %}<a href="{% url 'admin:magazine_article_add' %}">✍️ مقالهٔ جدید</a>{% endif %}
+  {% if perms.magazine.view_article %}<a href="{% url 'admin:magazine_article_changelist' %}">📰 مقاله‌ها</a>{% endif %}
+  {% url 'admin:interactions_comment_changelist' as comments_url %}
+  {% if comments_url and perms.interactions.view_comment %}<a href="{{ comments_url }}">💬 دیدگاه‌ها</a>{% endif %}
+  {% url 'admin:core_sitesettings_changelist' as settings_url %}
+  {% if settings_url and perms.core.change_sitesettings %}<a href="{{ settings_url }}">⚙️ تنظیمات سایت</a>{% endif %}
+  <a href="{% url 'magazine:home' %}" target="_blank" rel="noopener">🌐 مشاهدهٔ سایت</a>
+</nav>
+{% endif %}
+{% endblock %}

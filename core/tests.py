@@ -172,3 +172,15 @@ class AdminButtonTests(TestCase):
         response = self.client.get(home)
         self.assertContains(response, "data-admin-link")
         self.assertContains(response, f'href="{reverse("admin:index")}"')
+
+
+@override_settings(ADMIN_REQUIRE_MFA=False)
+class AdminThemeTests(TestCase):
+    def test_admin_uses_site_theme_and_quick_links(self):
+        self.client.force_login(User.objects.create_superuser("boss", "boss@example.com", "pass-12345-x"))
+        for url in (reverse("admin:index"), reverse("admin:magazine_article_changelist")):
+            response = self.client.get(url)
+            self.assertContains(response, "admin/theme.css")
+            self.assertContains(response, 'class="itm-logo"')
+            self.assertContains(response, reverse("admin:magazine_article_add"))
+            self.assertContains(response, 'id="logout-form"')
