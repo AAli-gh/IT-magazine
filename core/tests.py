@@ -220,3 +220,22 @@ class ForbiddenPageTests(TestCase):
         html = self.render_403(member).content.decode()
         self.assertNotIn(reverse("account_login") + "?next=", html)  # logged in: offer "back" instead
         self.assertIn("بازگشت به صفحهٔ قبل", html)
+
+
+class ErrorPreviewTests(TestCase):
+    def test_previews_are_for_admins_only(self):
+        urls = {code: reverse("core:error_preview", args=[code]) for code in (400, 403)}
+        for url in urls.values():
+            self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.force_login(User.objects.create_user("writer", "w@example.com", "pass-12345-x", is_staff=True))
+        for url in urls.values():
+            self.assertEqual(self.client.get(url).status_code, 404)
+
+        self.client.force_login(User.objects.create_superuser("boss", "b@example.com", "pass-12345-x"))
+        response = self.client.get(urls[403])
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "brand/403-robot.webp", status_code=403)
+        response = self.client.get(urls[400])
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "درخواست ارسال‌شده توسط شما قابل پردازش نیست.", status_code=400)
+        self.assertEqual(self.client.get(reverse("core:error_preview", args=[418])).status_code, 404)

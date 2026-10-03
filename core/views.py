@@ -1,6 +1,7 @@
 from django.conf import settings
+from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import connection
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.templatetags.static import static
 from django.urls import reverse
@@ -49,3 +50,14 @@ def healthz(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT 1")
     return HttpResponse("ok", content_type="text/plain")
+
+
+def error_preview(request, code):
+    """Lets site admins preview the custom 400/403 pages; everyone else gets a 404."""
+    if not request.user.is_superuser:
+        raise Http404
+    if code == 400:
+        raise BadRequest
+    if code == 403:
+        raise PermissionDenied
+    raise Http404
