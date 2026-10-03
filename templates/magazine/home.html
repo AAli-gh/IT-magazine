@@ -61,7 +61,7 @@
 {% endif %}
 
 {# ── Category shortcuts ── #}
-<nav class="flex gap-3 overflow-x-auto no-scrollbar snap-row pb-2 mb-6" aria-label="دسته‌بندی‌ها">
+<nav id="categories" class="flex gap-3 overflow-x-auto no-scrollbar snap-row pb-2 mb-6 scroll-mt-32" aria-label="دسته‌بندی‌ها">
   <a href="{% url 'magazine:search' %}?sort=new" class="snap-start shrink-0 w-24 sm:w-28 card !rounded-2xl p-3 flex flex-col items-center gap-2 text-center !bg-gradient-to-br !from-brand-600 !to-violet-600 text-white !ring-0">
     <span class="text-2xl">✦</span><span class="text-xs font-semibold">همه</span>
   </a>

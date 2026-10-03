@@ -184,3 +184,12 @@ class AdminThemeTests(TestCase):
             self.assertContains(response, 'class="itm-logo"')
             self.assertContains(response, reverse("admin:magazine_article_add"))
             self.assertContains(response, 'id="logout-form"')
+
+
+class NotFoundPageTests(TestCase):
+    def test_custom_404_page(self):
+        response = self.client.get("/no-such-page/")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "یافت نشد", status_code=404)
+        self.assertContains(response, "brand/404-robot.webp", status_code=404)
+        self.assertContains(response, f'action="{reverse("magazine:search")}"', status_code=404)
