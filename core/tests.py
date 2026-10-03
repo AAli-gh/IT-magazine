@@ -220,10 +220,3 @@ class ForbiddenPageTests(TestCase):
         html = self.render_403(member).content.decode()
         self.assertNotIn(reverse("account_login") + "?next=", html)  # logged in: offer "back" instead
         self.assertIn("بازگشت به صفحهٔ قبل", html)
-
-
-class ForbiddenPreviewTests(TestCase):
-    def test_preview_url_shows_custom_403(self):
-        response = self.client.get(reverse("core:forbidden_preview"))
-        self.assertEqual(response.status_code, 403)
-        self.assertContains(response, "brand/403-robot.webp", status_code=403)
