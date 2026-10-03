@@ -32,4 +32,5 @@ def site(request):
         "footer_pages": _cached("pages", lambda: list(
             Page.objects.filter(is_published=True, show_in_footer=True))),
         "unread_notifications": unread,
+        "error_layout": "base.html",  # error pages rendered with a request use the full site layout
     }

@@ -47,8 +47,11 @@ class ErrorPageTests(TestCase):
 
         response = server_error(RequestFactory().get("/"))
         self.assertEqual(response.status_code, 500)
-        self.assertIn("مشکلی در سرور پیش آمد".encode(), response.content)
-        self.assertIn(b'dir="rtl"', response.content)
+        html = response.content.decode()
+        self.assertIn("متأسفانه مشکلی در", html)
+        self.assertIn('dir="rtl"', html)
+        self.assertIn("brand/500-robot.webp", html)
+        self.assertNotIn("data-dropdown", html)  # standalone page, not the full site layout
 
     @override_settings(DEBUG=False)
     def test_unhandled_error_uses_500_template(self):
@@ -56,7 +59,7 @@ class ErrorPageTests(TestCase):
         with mock.patch("magazine.views._published", side_effect=RuntimeError("boom")):
             response = client.get(reverse("magazine:home"))
         self.assertEqual(response.status_code, 500)
-        self.assertContains(response, "مشکلی در سرور پیش آمد", status_code=500)
+        self.assertContains(response, "Internal Server Error", status_code=500)
 
 
 class AdminSecurityTests(TestCase):
@@ -223,19 +226,51 @@ class ForbiddenPageTests(TestCase):
 
 
 class ErrorPreviewTests(TestCase):
+    CODES = {
+        400: "درخواست ارسال‌شده توسط شما قابل پردازش نیست.",
+        401: "برای مشاهدهٔ این صفحه ابتدا باید وارد حساب کاربری خود شوید.",
+        403: "متأسفانه شما اجازهٔ دسترسی به این صفحه را ندارید.",
+        429: "شما در مدت زمان کوتاهی تعداد زیادی درخواست ارسال کرده‌اید.",
+        500: "این خطا ثبت شده است و برای رفع آن بررسی می‌شود.",
+        503: "در حال حاضر سرویس موقتاً در دسترس نیست.",
+        504: "سرور مقصد در زمان مقرر پاسخی ارسال نکرده است.",
+    }
+
     def test_previews_are_for_admins_only(self):
-        urls = {code: reverse("core:error_preview", args=[code]) for code in (400, 403)}
-        for url in urls.values():
-            self.assertEqual(self.client.get(url).status_code, 404)
+        url = lambda code: reverse("core:error_preview", args=[code])  # noqa: E731
+        for code in self.CODES:
+            self.assertEqual(self.client.get(url(code)).status_code, 404)
         self.client.force_login(User.objects.create_user("writer", "w@example.com", "pass-12345-x", is_staff=True))
-        for url in urls.values():
-            self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.get(url(403)).status_code, 404)
 
         self.client.force_login(User.objects.create_superuser("boss", "b@example.com", "pass-12345-x"))
-        response = self.client.get(urls[403])
-        self.assertEqual(response.status_code, 403)
-        self.assertContains(response, "brand/403-robot.webp", status_code=403)
-        response = self.client.get(urls[400])
-        self.assertEqual(response.status_code, 400)
-        self.assertContains(response, "درخواست ارسال‌شده توسط شما قابل پردازش نیست.", status_code=400)
-        self.assertEqual(self.client.get(reverse("core:error_preview", args=[418])).status_code, 404)
+        for code, text in self.CODES.items():
+            with self.subTest(code=code):
+                response = self.client.get(url(code))
+                self.assertEqual(response.status_code, code)
+                self.assertContains(response, text, status_code=code)
+                if code not in (400,):  # 400 still uses the 404 illustration
+                    self.assertContains(response, f"brand/{code}-robot.webp", status_code=code)
+        self.assertEqual(self.client.get(url(418)).status_code, 404)
+
+    def test_401_offers_login_and_signup(self):
+        self.client.force_login(User.objects.create_superuser("boss", "b@example.com", "pass-12345-x"))
+        response = self.client.get(reverse("core:error_preview", args=[401]))
+        self.assertContains(response, reverse("account_signup"), status_code=401)
+        self.assertContains(response, reverse("account_login") + "?next=", status_code=401)
+
+
+class MaintenanceModeTests(TestCase):
+    @override_settings(MAINTENANCE_MODE=True)
+    def test_visitors_get_503_but_staff_and_login_work(self):
+        response = self.client.get(reverse("magazine:home"))
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response["Retry-After"], "600")
+        self.assertContains(response, "brand/503-robot.webp", status_code=503)
+        self.assertEqual(self.client.get(reverse("account_login")).status_code, 200)
+
+        self.client.force_login(User.objects.create_user("editor", "e@example.com", "pass-12345-x", is_staff=True))
+        self.assertEqual(self.client.get(reverse("magazine:home")).status_code, 200)
+
+    def test_off_by_default(self):
+        self.assertEqual(self.client.get(reverse("magazine:home")).status_code, 200)

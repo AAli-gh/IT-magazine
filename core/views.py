@@ -3,6 +3,7 @@ from django.core.exceptions import BadRequest, PermissionDenied
 from django.db import connection
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.urls import reverse
 from django.views.decorators.http import require_GET
@@ -52,12 +53,20 @@ def healthz(request):
     return HttpResponse("ok", content_type="text/plain")
 
 
+PREVIEW_CODES = {400, 401, 403, 429, 500, 503, 504}
+
+
 def error_preview(request, code):
-    """Lets site admins preview the custom 400/403 pages; everyone else gets a 404."""
-    if not request.user.is_superuser:
+    """Lets site admins preview the custom error pages; everyone else gets a 404."""
+    if not request.user.is_superuser or code not in PREVIEW_CODES:
         raise Http404
     if code == 400:
         raise BadRequest
     if code == 403:
         raise PermissionDenied
-    raise Http404
+    if code in (401, 429):
+        return render(request, f"{code}.html", status=code)
+    # 500/503/504 are shown when the app may be unhealthy: render them without request context.
+    response = HttpResponse(render_to_string(f"{code}.html"), status=code)
+    response._has_been_logged = True  # a preview is not a real server error: keep it out of logs and admin emails
+    return response

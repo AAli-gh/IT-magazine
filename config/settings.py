@@ -73,6 +73,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "core.middleware.AdminMFAMiddleware",
+    "core.middleware.MaintenanceModeMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -139,6 +140,8 @@ MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
 MFA_TOTP_ISSUER = os.environ.get("SITE_NAME", "IT Magazine")
 # Staff must enable 2FA before using the admin panel (on by default in production).
 ADMIN_REQUIRE_MFA = env_bool("ADMIN_REQUIRE_MFA", not DEBUG)
+# Show visitors the 503 "under maintenance" page (staff and the admin keep working).
+MAINTENANCE_MODE = env_bool("MAINTENANCE_MODE", False)
 
 # OAuth apps are configured from the environment; a provider without credentials is hidden.
 SOCIALACCOUNT_PROVIDERS = {}

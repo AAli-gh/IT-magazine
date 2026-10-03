@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 
@@ -31,3 +33,23 @@ class AdminMFAMiddleware:
         from allauth.mfa.models import Authenticator
 
         return Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).exists()
+
+
+class MaintenanceModeMiddleware:
+    """With MAINTENANCE_MODE on, visitors get the 503 page; staff, login and admin keep working."""
+
+    EXEMPT_PREFIXES = ("/admin/", "/accounts/", "/static/", "/media/", "/healthz")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if (
+            settings.MAINTENANCE_MODE
+            and not request.path.startswith(self.EXEMPT_PREFIXES)
+            and not (request.user.is_authenticated and request.user.is_staff)
+        ):
+            response = HttpResponse(render_to_string("503.html"), status=503)
+            response["Retry-After"] = "600"
+            return response
+        return self.get_response(request)
