@@ -1515,3 +1515,7 @@ DRF یک رابط وب قابل‌مرور هم دارد؛ آدرس API را د�
 from .showcase_extra import EXTRA_ARTICLES, PHOTOS  # noqa: E402
 
 ARTICLES = EXTRA_ARTICLES + ARTICLES
+from .showcase_more import MORE_ARTICLES, MORE_PHOTOS  # noqa: E402
+
+ARTICLES = MORE_ARTICLES + ARTICLES
+PHOTOS = {**PHOTOS, **MORE_PHOTOS}
