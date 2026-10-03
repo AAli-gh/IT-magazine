@@ -39,7 +39,7 @@
 {% endif %}
 
 <div class="grid gap-10 lg:grid-cols-[1fr_280px] [&>*]:min-w-0">
-  <article class="min-w-0" data-article-body>
+  <article class="min-w-0 card p-5 sm:p-8" data-article-body>
     <header>
       {% if article.ai_daily_number %}<span class="chip !bg-violet-100 dark:!bg-violet-900/40 mb-3" dir="ltr">🤖 AI Daily #{{ article.ai_daily_number }}</span>{% endif %}
       <h1 class="text-3xl md:text-4xl font-extrabold leading-[1.6]">{{ article.title }}</h1>

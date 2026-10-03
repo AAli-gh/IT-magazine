@@ -20,3 +20,17 @@
 /* Honeypot: invisible without off-screen offsets (a large left offset widens RTL pages) */
 .hp-field { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; border: 0 !important;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; opacity: 0; pointer-events: none; }
+
+/* Fixed, pre-blurred photo behind every page (static/brand/bg.webp), washed lighter or darker per theme. */
+body { background: #d9d6f5; }
+.dark body { background: #020617; }
+.site-bg { position: fixed; inset: 0; z-index: -1; background: url("../brand/bg.webp") center / cover no-repeat; }
+.site-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(238 242 255 / 0.45)); }
+.dark .site-bg::after { background: linear-gradient(180deg, rgb(2 6 23 / 0.78), rgb(15 23 42 / 0.88)); }
+
+/* Hero slider */
+[data-slider] [data-slide] { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility .6s; }
+[data-slider] [data-slide].is-active { opacity: 1; visibility: visible; }
+[data-slider] [data-dot].is-active { width: 1.5rem; background: #fff; }
+.snap-row { scroll-snap-type: x mandatory; }
+.snap-row > * { scroll-snap-align: start; }

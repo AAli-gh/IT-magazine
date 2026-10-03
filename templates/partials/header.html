@@ -1,10 +1,11 @@
-<header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
+{% url 'magazine:home' as u_home %}{% url 'magazine:content_type' 'news' as u_news %}{% url 'magazine:content_type' 'article' as u_articles %}{% url 'magazine:content_type' 'tutorial' as u_tutorials %}{% url 'magazine:content_type' 'ai_tool' as u_tools %}{% url 'magazine:content_type' 'research' as u_research %}{% url 'magazine:ai_daily' as u_daily %}
+<header class="sticky top-0 z-40 glass !ring-0 border-b border-white/60 dark:border-white/10 shadow-[0_4px_24px_rgb(49_46_129/0.08)]">
   <div class="mx-auto max-w-7xl px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-4">
-    <a href="{% url 'magazine:home' %}" class="flex items-center gap-2 shrink-0" aria-label="{{ SITE_NAME }}">
-      <span class="grid place-items-center h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 text-white font-black">IT</span>
+    <a href="{{ u_home }}" class="flex items-center gap-2.5 shrink-0" aria-label="{{ SITE_NAME }}">
+      <span class="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 text-white font-black shadow-lg shadow-brand-600/30">IT</span>
       <span class="leading-tight hidden sm:inline">
-        <span class="block font-extrabold">{{ SITE_NAME }}</span>
-        <span class="block text-[11px] text-slate-500 tracking-wide" dir="ltr">{{ SITE_NAME_EN }}</span>
+        <span class="block text-lg font-black tracking-tight text-slate-900 dark:text-white">{{ SITE_NAME }}</span>
+        <span class="block text-[10px] font-semibold text-brand-700/80 dark:text-brand-500 tracking-[0.2em]" dir="ltr">IT MAGAZINE</span>
       </span>
     </a>
 
@@ -13,25 +14,14 @@
         <span class="sr-only">جستجو</span>
         <input type="search" name="q" value="{{ q|default:'' }}" placeholder="جستجو در مقالات، آموزش‌ها و اخبار..." autocomplete="off"
                hx-get="{% url 'magazine:search_suggest' %}" hx-trigger="input changed delay:250ms, focus" hx-target="#search-suggest"
-               class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 pr-10 text-sm focus:ring-brand-500">
-        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+               class="w-full rounded-full border-0 bg-white/70 dark:bg-slate-800/70 ring-1 ring-white/80 dark:ring-white/10 pr-11 text-sm shadow-inner focus:ring-2 focus:ring-brand-500">
+        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
       </label>
       <div id="search-suggest" class="absolute inset-x-0 top-full mt-2 z-50"></div>
     </form>
 
     {# Phones show icon-only buttons; tighter padding keeps them all on one row. #}
-    <nav class="mr-auto flex items-center gap-1 text-sm [&_.btn-ghost]:px-2.5 [&_.btn-primary]:px-2.5 sm:[&_.btn-ghost]:px-4 sm:[&_.btn-primary]:px-4">
-      <div class="relative" data-dropdown>
-        <button type="button" class="btn-ghost" data-dropdown-toggle aria-expanded="false" aria-label="دسته‌بندی‌ها"><span class="hidden sm:inline">دسته‌بندی‌ها</span> ▾</button>
-        {# Phones: full-width panel under the header (the toggle sits mid-screen, so an anchored menu would overflow). #}
-        <div class="hidden fixed inset-x-3 top-[4.25rem] sm:absolute sm:inset-x-auto sm:top-auto sm:left-0 sm:mt-2 sm:w-72 card p-2 shadow-xl grid grid-cols-2 sm:grid-cols-1 gap-x-1 text-[13px] sm:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
-          {% for cat in nav_categories %}
-          <a href="{{ cat.get_absolute_url }}" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800">{{ cat.icon }} {{ cat.name }}</a>
-          {% endfor %}
-          <hr class="col-span-2 sm:col-span-1 my-2 border-slate-200 dark:border-slate-800">
-          <a href="{% url 'magazine:ai_daily' %}" class="col-span-2 sm:col-span-1 rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold">🤖 AI Daily</a>
-        </div>
-      </div>
+    <nav class="mr-auto flex items-center gap-1.5 text-sm [&_.btn-ghost]:rounded-full [&_.btn-primary]:rounded-full [&_.btn-ghost]:px-2.5 [&_.btn-primary]:px-2.5 sm:[&_.btn-ghost]:px-4 sm:[&_.btn-primary]:px-4">
       <a href="{% url 'magazine:search' %}" class="md:hidden btn-ghost" aria-label="جستجو">🔍</a>
       <button type="button" class="btn-ghost max-[359px]:hidden" data-theme-toggle aria-label="تغییر تم">🌓</button>
       {% if user.is_authenticated %}
@@ -41,17 +31,29 @@
         <a href="{% url 'accounts:profile' %}" class="btn-ghost">👤 <span class="hidden sm:inline">{{ user.display_name }}</span></a>
         {% if user.is_superuser %}<a href="{% url 'admin:index' %}" class="btn-primary" aria-label="پنل مدیریت" data-admin-link>⚙️ <span class="hidden sm:inline">پنل مدیریت</span></a>{% endif %}
       {% else %}
-        <a href="{% url 'account_login' %}" class="btn-ghost">ورود</a>
-        <a href="{% url 'account_signup' %}" class="hidden sm:inline-flex btn-primary">ثبت‌نام</a>
+        <a href="{% url 'account_login' %}" class="btn-ghost">👤 <span class="hidden sm:inline">ورود / ثبت‌نام</span><span class="sm:hidden">ورود</span></a>
       {% endif %}
     </nav>
   </div>
-  <div class="border-t border-slate-100 dark:border-slate-900">
-    <div class="mx-auto max-w-7xl px-4 flex items-center gap-2 overflow-x-auto py-2 text-sm no-scrollbar">
-      <a href="{% url 'magazine:ai_daily' %}" class="chip whitespace-nowrap shrink-0 !bg-violet-100 dark:!bg-violet-900/40 font-semibold">🤖 AI Daily</a>
-      {% for cat in nav_categories %}
-      <a href="{{ cat.get_absolute_url }}" class="chip whitespace-nowrap shrink-0">{{ cat.icon }} {{ cat.name }}</a>
-      {% endfor %}
-    </div>
+
+  {# Section menu: scrolls sideways on narrow screens; the categories menu is a full-width panel there. #}
+  <div class="border-t border-white/50 dark:border-white/5">
+    <nav class="mx-auto max-w-7xl px-3 sm:px-4 flex items-center md:justify-center gap-1 overflow-x-auto md:overflow-visible no-scrollbar text-sm font-medium" aria-label="بخش‌های سایت">
+      <a href="{{ u_home }}" class="nav-link {% if request.path == u_home %}is-active{% endif %}">صفحه اصلی</a>
+      <a href="{{ u_news }}" class="nav-link {% if request.path == u_news %}is-active{% endif %}">اخبار</a>
+      <a href="{{ u_articles }}" class="nav-link {% if request.path == u_articles %}is-active{% endif %}">مقالات</a>
+      <a href="{{ u_tutorials }}" class="nav-link {% if request.path == u_tutorials %}is-active{% endif %}">آموزش‌ها</a>
+      <a href="{{ u_tools }}" class="nav-link {% if request.path == u_tools %}is-active{% endif %}">ابزارهای AI</a>
+      <a href="{{ u_daily }}" class="nav-link {% if u_daily in request.path %}is-active{% endif %}" dir="ltr">AI Daily</a>
+      <a href="{{ u_research }}" class="nav-link {% if request.path == u_research %}is-active{% endif %}">مقالات علمی</a>
+      <div class="relative shrink-0" data-dropdown>
+        <button type="button" class="nav-link" data-dropdown-toggle aria-expanded="false">دسته‌بندی‌ها ▾</button>
+        <div class="hidden fixed inset-x-3 top-full mt-1 md:absolute md:inset-x-auto md:top-full md:left-0 md:w-72 card p-2 shadow-xl grid grid-cols-2 md:grid-cols-1 gap-x-1 text-[13px] md:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
+          {% for cat in nav_categories %}
+          <a href="{{ cat.get_absolute_url }}" class="rounded-xl px-3 py-2 hover:bg-white/70 dark:hover:bg-slate-800/70">{{ cat.icon }} {{ cat.name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </nav>
   </div>
 </header>

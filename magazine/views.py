@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import IntegrityError, connection, transaction
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -51,15 +51,41 @@ def home(request):
     featured = articles.filter(is_featured=True).first() or articles.first()
     exclude_ids = [featured.pk] if featured else []
 
+    # Hero slider: the top story plus the newest editor picks; three more stories beside it.
+    hero_slides = ([featured] if featured else []) + list(
+        articles.filter(is_editor_pick=True).exclude(pk__in=exclude_ids)[:3])
+    shown = [a.pk for a in hero_slides]
+    hero_side, used_categories = [], {a.category_id for a in hero_slides[:1]}
+    for article in articles.exclude(pk__in=shown).exclude(content_type=Article.ContentType.NEWS)[:30]:
+        if article.category_id not in used_categories:  # one story per category for variety
+            hero_side.append(article)
+            used_categories.add(article.category_id)
+        if len(hero_side) == 3:
+            break
+    shown += [a.pk for a in hero_side]
+    picks = list(articles.exclude(pk__in=shown).order_by("-views_count")[:3])
+    shown += [a.pk for a in picks]
+
     category_sections = []
     for category in Category.objects.filter(show_on_home=True):
         items = list(articles.filter(category=category).exclude(pk__in=exclude_ids)[:4])
         if items:
             category_sections.append((category, items))
 
+    # Category cards: published-article count and the newest cover in each category.
+    counted = Category.objects.annotate(
+        n=Count("articles", filter=Q(articles__status=Article.Status.PUBLISHED,
+                                     articles__published_at__lte=timezone.now()))
+    ).filter(n__gt=0).order_by("-n", "order")
+    category_cards = [(category, articles.filter(category=category).exclude(cover="").first()) for category in counted]
+
     context = {
         "featured": featured,
-        "latest": articles.exclude(pk__in=exclude_ids)[:6],
+        "hero_slides": hero_slides,
+        "hero_side": hero_side,
+        "picks": picks,
+        "category_cards": category_cards,
+        "latest": articles.exclude(pk__in=shown)[:8],
         "category_sections": category_sections,
         "ai_daily": articles.filter(content_type=Article.ContentType.AI_DAILY).first(),
         "tutorials": articles.filter(content_type=Article.ContentType.TUTORIAL).order_by(

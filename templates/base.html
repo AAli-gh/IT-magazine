@@ -37,14 +37,15 @@
   {% block head %}{% endblock %}
   {% if site_settings.head_scripts %}{{ site_settings.head_scripts|safe }}{% endif %}
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 font-sans antialiased"
+<body class="min-h-screen text-slate-800 dark:text-slate-200 font-sans antialiased"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div class="site-bg" aria-hidden="true"></div>
   {% include "partials/header.html" %}
 
   {% if messages %}
   <div class="mx-auto max-w-7xl px-4 mt-4 space-y-2">
     {% for message in messages %}
-    <div class="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 px-4 py-3 text-sm">{{ message }}</div>
+    <div class="rounded-2xl glass !bg-emerald-50/80 dark:!bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 px-4 py-3 text-sm">{{ message }}</div>
     {% endfor %}
   </div>
   {% endif %}

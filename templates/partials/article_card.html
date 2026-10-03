@@ -1,18 +1,20 @@
 {% load mag %}
-{# Phones: compact row with a thumbnail beside the title. sm and up: classic vertical card. #}
-<article class="group card overflow-hidden flex flex-row sm:flex-col hover:shadow-lg transition">
-  <a href="{{ article.get_absolute_url }}" class="block shrink-0 w-28 min-h-[6.5rem] self-stretch sm:w-auto sm:min-h-0 sm:self-auto sm:aspect-[16/9] overflow-hidden" tabindex="-1" aria-hidden="true">{% include "partials/cover.html" %}</a>
+{# Phones: compact row with a thumbnail beside the title. sm and up: vertical card with the category badge on the image. #}
+<article class="group card overflow-hidden flex flex-row sm:flex-col hover:-translate-y-0.5 hover:shadow-xl transition duration-300">
+  <a href="{{ article.get_absolute_url }}" class="relative block shrink-0 w-28 min-h-[6.5rem] self-stretch sm:w-auto sm:min-h-0 sm:self-auto sm:aspect-[16/10] overflow-hidden sm:m-2 sm:mb-0 sm:rounded-2xl" tabindex="-1" aria-hidden="true">
+    {% include "partials/cover.html" %}
+    <span class="pill absolute bottom-2 right-2 hidden sm:inline-flex">{{ article.category.name }}</span>
+  </a>
   <div class="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
     <div class="flex items-center gap-2 text-[11px] sm:text-xs mb-1 sm:mb-2 min-w-0">
-      <a href="{{ article.category.get_absolute_url }}" class="text-brand-600 dark:text-brand-500 font-semibold truncate">{{ article.category.icon }} {{ article.category.name }}</a>
-      <span class="text-slate-400 hidden sm:inline">•</span>
+      <a href="{{ article.category.get_absolute_url }}" class="text-brand-700 dark:text-brand-500 font-semibold truncate sm:hidden">{{ article.category.icon }} {{ article.category.name }}</a>
       <a href="{% url 'magazine:content_type' article.content_type %}" class="text-slate-500 hidden sm:inline whitespace-nowrap">{{ article.get_content_type_display }}</a>
     </div>
-    <h3 class="font-bold text-sm sm:text-base leading-6 sm:leading-7 line-clamp-3 sm:line-clamp-none"><a href="{{ article.get_absolute_url }}" class="hover:text-brand-600">{{ article.display_title }}</a></h3>
-    {% if article.excerpt %}<p class="hidden sm:block mt-2 text-sm text-slate-500 leading-6 line-clamp-2">{{ article.excerpt }}</p>{% endif %}
-    <div class="mt-auto pt-2 sm:pt-3 flex items-center gap-3 text-[11px] sm:text-xs text-slate-400">
+    <h3 class="font-bold text-sm sm:text-base leading-6 sm:leading-7 line-clamp-3 sm:line-clamp-2 text-slate-900 dark:text-white"><a href="{{ article.get_absolute_url }}" class="hover:text-brand-700 dark:hover:text-brand-500">{{ article.display_title }}</a></h3>
+    {% if article.excerpt %}<p class="hidden sm:block mt-2 text-sm text-slate-600 dark:text-slate-400 leading-6"><span class="line-clamp-2">{{ article.excerpt }}</span></p>{% endif %}
+    <div class="mt-auto pt-2 sm:pt-3 flex items-center justify-between gap-3 text-[11px] sm:text-xs text-slate-500">
       <span>{{ article.published_at|jdate }}</span>
-      <span>⏱ {{ article.reading_time|fa_digits }} دقیقه</span>
+      <span>⏱ {{ article.reading_time|fa_digits }} دقیقه مطالعه</span>
     </div>
   </div>
 </article>

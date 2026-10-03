@@ -528,3 +528,19 @@ class ShowcaseTests(TestCase):
         self.assertEqual(dailies, sorted(dailies, key=lambda a: a.published_at))  # newest issue has the top number
         for article in Article.objects.all():
             self.assertEqual(self.client.get(article.get_absolute_url()).status_code, 200, article.title)
+
+
+class HomeLayoutTests(TestCase):
+    def test_home_has_hero_slider_side_stories_and_category_cards(self):
+        cats = [Category.objects.create(name=f"دسته {i}", slug=f"c{i}") for i in range(4)]
+        top = make_article(cats[0], title="مطلب اصلی", is_featured=True)
+        make_article(cats[0], title="منتخب سردبیر", is_editor_pick=True)
+        for i, cat in enumerate(cats):
+            make_article(cat, title=f"مطلب {i}")
+        response = self.client.get(reverse("magazine:home"))
+        self.assertContains(response, "data-slider")
+        self.assertEqual(response.context["hero_slides"][0], top)
+        side_categories = [a.category_id for a in response.context["hero_side"]]
+        self.assertEqual(len(side_categories), len(set(side_categories)))  # one per category
+        self.assertNotIn(cats[0].pk, side_categories)  # the top story's category is already shown
+        self.assertEqual({c.pk for c, _ in response.context["category_cards"]}, {c.pk for c in cats})

@@ -99,4 +99,28 @@
       } catch (e) { /* user cancelled */ }
     });
   });
+
+  // Hero slider: autoplay every 6s, pauses on hover/focus and when the tab is hidden.
+  document.querySelectorAll("[data-slider]").forEach((root) => {
+    const slides = [...root.querySelectorAll("[data-slide]")];
+    const dots = [...root.querySelectorAll("[data-dot]")];
+    if (slides.length < 2) return;
+    let index = 0, timer = null;
+    const show = (i) => {
+      index = (i + slides.length) % slides.length;
+      slides.forEach((s, n) => { s.classList.toggle("is-active", n === index); s.toggleAttribute("inert", n !== index); });
+      dots.forEach((d, n) => { d.classList.toggle("is-active", n === index); d.setAttribute("aria-current", String(n === index)); });
+    };
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const start = () => { if (!reduced) { clearInterval(timer); timer = setInterval(() => !document.hidden && show(index + 1), 6000); } };
+    const stop = () => clearInterval(timer);
+    root.querySelector("[data-next]")?.addEventListener("click", () => { show(index + 1); start(); });
+    root.querySelector("[data-prev]")?.addEventListener("click", () => { show(index - 1); start(); });
+    dots.forEach((d, n) => d.addEventListener("click", () => { show(n); start(); }));
+    root.addEventListener("mouseenter", stop);
+    root.addEventListener("mouseleave", start);
+    root.addEventListener("focusin", stop);
+    show(0);
+    start();
+  });
 })();
