@@ -193,3 +193,30 @@ class NotFoundPageTests(TestCase):
         self.assertContains(response, "یافت نشد", status_code=404)
         self.assertContains(response, "brand/404-robot.webp", status_code=404)
         self.assertContains(response, f'action="{reverse("magazine:search")}"', status_code=404)
+
+
+class ForbiddenPageTests(TestCase):
+    def render_403(self, user):
+        from django.contrib.sessions.backends.signed_cookies import SessionStore
+        from django.core.exceptions import PermissionDenied
+        from django.test import RequestFactory
+        from django.views.defaults import permission_denied
+
+        request = RequestFactory().get("/secret/")
+        request.user, request.session = user, SessionStore()
+        return permission_denied(request, PermissionDenied())
+
+    def test_custom_403_page(self):
+        from django.contrib.auth.models import AnonymousUser
+
+        response = self.render_403(AnonymousUser())
+        self.assertEqual(response.status_code, 403)
+        html = response.content.decode()
+        self.assertIn("brand/403-robot.webp", html)
+        self.assertIn("متأسفانه شما اجازهٔ دسترسی به این صفحه را ندارید.", html)
+        self.assertIn(reverse("account_login") + "?next=/secret/", html)  # anonymous: offer login
+
+        member = User.objects.create_user("reader", "reader@example.com", "pass-12345-x")
+        html = self.render_403(member).content.decode()
+        self.assertNotIn(reverse("account_login") + "?next=", html)  # logged in: offer "back" instead
+        self.assertIn("بازگشت به صفحهٔ قبل", html)
