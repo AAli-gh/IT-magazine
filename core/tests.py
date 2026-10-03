@@ -156,3 +156,19 @@ class ContactLinksTests(TestCase):
         contact = self.client.get(reverse("core:page", args=["contact"]))
         self.assertContains(contact, "example_co")
         self.assertContains(contact, "team@example.com")
+
+
+class AdminButtonTests(TestCase):
+    def test_admin_panel_button_only_for_superusers(self):
+        home = reverse("magazine:home")
+        self.assertNotContains(self.client.get(home), "data-admin-link")
+
+        author = User.objects.create_user("writer", "writer@example.com", "pass-12345-x", is_staff=True)
+        self.client.force_login(author)
+        self.assertNotContains(self.client.get(home), "data-admin-link")
+
+        boss = User.objects.create_superuser("boss", "boss@example.com", "pass-12345-x")
+        self.client.force_login(boss)
+        response = self.client.get(home)
+        self.assertContains(response, "data-admin-link")
+        self.assertContains(response, f'href="{reverse("admin:index")}"')

@@ -38,7 +38,7 @@
 <div class="rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-4 py-3 text-sm mb-4">پیش‌نمایش: این مطلب هنوز منتشر نشده است.</div>
 {% endif %}
 
-<div class="grid gap-10 lg:grid-cols-[1fr_280px]">
+<div class="grid gap-10 lg:grid-cols-[1fr_280px] [&>*]:min-w-0">
   <article class="min-w-0" data-article-body>
     <header>
       {% if article.ai_daily_number %}<span class="chip !bg-violet-100 dark:!bg-violet-900/40 mb-3" dir="ltr">🤖 AI Daily #{{ article.ai_daily_number }}</span>{% endif %}
