@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -49,3 +50,8 @@ def healthz(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT 1")
     return HttpResponse("ok", content_type="text/plain")
+
+
+def forbidden_preview(request):
+    """Always answers 403 so the custom "access denied" page can be seen at a fixed address."""
+    raise PermissionDenied
