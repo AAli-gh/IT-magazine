@@ -27,7 +27,6 @@ def robots_txt(request):
     sitemap = settings.SITE_URL.rstrip("/") + reverse("django.contrib.sitemaps.views.sitemap")
     lines = [
         "User-agent: *",
-        "Disallow: /admin/",
         "Disallow: /accounts/",
         "Disallow: /i/",
         "Disallow: /admin-tools/",

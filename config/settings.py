@@ -142,6 +142,8 @@ MFA_TOTP_ISSUER = os.environ.get("SITE_NAME", "IT Magazine")
 ADMIN_REQUIRE_MFA = env_bool("ADMIN_REQUIRE_MFA", not DEBUG)
 # Show visitors the 503 "under maintenance" page (staff and the admin keep working).
 MAINTENANCE_MODE = env_bool("MAINTENANCE_MODE", False)
+# Path of the admin panel. Set a hard-to-guess value in production; /admin/ then shows the 404 page.
+ADMIN_URL = os.environ.get("ADMIN_URL", "admin/").strip("/") + "/"
 
 # OAuth apps are configured from the environment; a provider without credentials is hidden.
 SOCIALACCOUNT_PROVIDERS = {}

@@ -86,6 +86,34 @@ class AdminSecurityTests(TestCase):
         Authenticator.objects.create(user=self.staff, type=Authenticator.Type.TOTP, data={})
         self.assertEqual(self.client.get(reverse("admin:index")).status_code, 200)
 
+    @override_settings(ADMIN_URL="secret-panel/", ADMIN_REQUIRE_MFA=True)
+    def test_custom_admin_url_hides_default_path(self):
+        import importlib
+
+        from django.urls import clear_url_caches
+
+        import config.urls
+
+        try:
+            importlib.reload(config.urls)
+            clear_url_caches()
+            self.assertEqual(reverse("admin:index"), "/secret-panel/")
+            self.assertEqual(self.client.get("/admin/").status_code, 404)
+            self.assertEqual(self.client.get("/admin/login/").status_code, 404)
+            response = self.client.get("/secret-panel/")
+            self.assertEqual(response.status_code, 302)
+            self.assertIn("next=/secret-panel/", response["Location"])
+            # The 2FA check follows the configured path.
+            self.client.force_login(self.staff)
+            response = self.client.get("/secret-panel/")
+            self.assertTrue(response["Location"].startswith(reverse("mfa_activate_totp")))
+            robots = self.client.get("/robots.txt").content.decode()
+            self.assertNotIn("secret-panel", robots)
+        finally:
+            with override_settings(ADMIN_URL="admin/"):
+                importlib.reload(config.urls)
+            clear_url_caches()
+
     def test_2fa_setup_page_renders(self):
         # Log in through allauth: setting up 2FA requires a recent real login.
         self.client.post(reverse("account_login"), {"login": "boss", "password": "pass-12345-x"})

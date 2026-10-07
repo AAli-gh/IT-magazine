@@ -10,8 +10,8 @@ from magazine.sitemaps import sitemaps
 
 urlpatterns = [
     # Admin sign-in goes through allauth so rate limits and two-factor codes apply.
-    path("admin/login/", admin_login, name="admin_login_redirect"),
-    path("admin/", admin.site.urls),
+    path(settings.ADMIN_URL + "login/", admin_login, name="admin_login_redirect"),
+    path(settings.ADMIN_URL, admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("accounts/", include("accounts.urls")),
     path("i/", include("interactions.urls")),

@@ -19,7 +19,7 @@ class AdminMFAMiddleware:
     def __call__(self, request):
         if (
             settings.ADMIN_REQUIRE_MFA
-            and request.path.startswith("/admin/")
+            and request.path.startswith("/" + settings.ADMIN_URL)
             and request.user.is_authenticated
             and request.user.is_staff
             and not self._has_mfa(request.user)
@@ -38,7 +38,7 @@ class AdminMFAMiddleware:
 class MaintenanceModeMiddleware:
     """With MAINTENANCE_MODE on, visitors get the 503 page; staff, login and admin keep working."""
 
-    EXEMPT_PREFIXES = ("/admin/", "/accounts/", "/static/", "/media/", "/healthz")
+    EXEMPT_PREFIXES = ("/accounts/", "/static/", "/media/", "/healthz")
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -46,7 +46,7 @@ class MaintenanceModeMiddleware:
     def __call__(self, request):
         if (
             settings.MAINTENANCE_MODE
-            and not request.path.startswith(self.EXEMPT_PREFIXES)
+            and not request.path.startswith((*self.EXEMPT_PREFIXES, "/" + settings.ADMIN_URL))
             and not (request.user.is_authenticated and request.user.is_staff)
         ):
             response = HttpResponse(render_to_string("503.html"), status=503)
