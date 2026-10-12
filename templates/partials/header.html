@@ -1,6 +1,6 @@
-{% url 'magazine:home' as u_home %}{% url 'magazine:content_type' 'news' as u_news %}{% url 'magazine:content_type' 'article' as u_articles %}{% url 'magazine:content_type' 'tutorial' as u_tutorials %}{% url 'magazine:content_type' 'ai_tool' as u_tools %}{% url 'magazine:content_type' 'research' as u_research %}{% url 'magazine:ai_daily' as u_daily %}
+{% load mag %}{% url 'magazine:home' as u_home %}{% url 'magazine:content_type' 'news' as u_news %}{% url 'magazine:content_type' 'article' as u_articles %}{% url 'magazine:content_type' 'tutorial' as u_tutorials %}{% url 'magazine:content_type' 'ai_tool' as u_tools %}{% url 'magazine:content_type' 'research' as u_research %}{% url 'magazine:ai_daily' as u_daily %}
 <header class="sticky top-0 z-40 glass !ring-0 border-b border-white/60 dark:border-white/10 shadow-[0_4px_24px_rgb(49_46_129/0.08)]">
-  <div class="mx-auto max-w-7xl px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-4">
+  <div class="mx-auto max-w-screen-2xl px-3 sm:px-4 h-16 md:h-[4.5rem] flex items-center gap-2 sm:gap-4">
     <a href="{{ u_home }}" class="flex items-center gap-2.5 shrink-0" aria-label="{{ SITE_NAME }}">
       <span class="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 text-white font-black shadow-lg shadow-brand-600/30">IT</span>
       <span class="leading-tight hidden sm:inline">
@@ -9,12 +9,12 @@
       </span>
     </a>
 
-    <form action="{% url 'magazine:search' %}" method="get" role="search" class="hidden md:block flex-1 max-w-md mx-auto relative" data-suggest>
+    <form action="{% url 'magazine:search' %}" method="get" role="search" class="hidden md:block flex-1 max-w-xl mx-auto relative" data-suggest>
       <label class="relative block">
         <span class="sr-only">جستجو</span>
         <input type="search" name="q" value="{{ q|default:'' }}" placeholder="جستجو در مقالات، آموزش‌ها و اخبار..." autocomplete="off"
                hx-get="{% url 'magazine:search_suggest' %}" hx-trigger="input changed delay:250ms, focus" hx-target="#search-suggest"
-               class="w-full rounded-full border-0 bg-white/70 dark:bg-slate-800/70 ring-1 ring-white/80 dark:ring-white/10 pr-11 text-sm shadow-inner focus:ring-2 focus:ring-brand-500">
+               class="w-full rounded-full border-0 bg-white/70 dark:bg-slate-800/70 ring-1 ring-white/80 dark:ring-white/10 pr-11 py-3 text-sm shadow-inner focus:ring-2 focus:ring-brand-500">
         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
       </label>
       <div id="search-suggest" class="absolute inset-x-0 top-full mt-2 z-50"></div>
@@ -36,19 +36,27 @@
     </nav>
   </div>
 
-  {# Section menu: scrolls sideways on narrow screens; the categories menu is a full-width panel there. #}
-  <div class="border-t border-white/50 dark:border-white/5">
-    <nav class="mx-auto max-w-7xl px-3 sm:px-4 flex items-center md:justify-center gap-1 overflow-x-auto md:overflow-visible no-scrollbar text-sm font-medium" aria-label="بخش‌های سایت">
-      <a href="{{ u_home }}" class="nav-link {% if request.path == u_home %}is-active{% endif %}">صفحه اصلی</a>
-      <a href="{{ u_news }}" class="nav-link {% if request.path == u_news %}is-active{% endif %}">اخبار</a>
-      <a href="{{ u_articles }}" class="nav-link {% if request.path == u_articles %}is-active{% endif %}">مقالات</a>
-      <a href="{{ u_tutorials }}" class="nav-link {% if request.path == u_tutorials %}is-active{% endif %}">آموزش‌ها</a>
-      <a href="{{ u_tools }}" class="nav-link {% if request.path == u_tools %}is-active{% endif %}">ابزارهای AI</a>
-      <a href="{{ u_daily }}" class="nav-link {% if u_daily in request.path %}is-active{% endif %}" dir="ltr">AI Daily</a>
-      <a href="{{ u_research }}" class="nav-link {% if request.path == u_research %}is-active{% endif %}">مقالات علمی</a>
-      <div class="relative shrink-0" data-dropdown>
-        <button type="button" class="nav-link" data-dropdown-toggle aria-expanded="false">دسته‌بندی‌ها ▾</button>
-        <div class="hidden fixed inset-x-3 top-full mt-1 md:absolute md:inset-x-auto md:top-full md:left-0 md:w-72 card p-2 shadow-xl grid grid-cols-2 md:grid-cols-1 gap-x-1 text-[13px] md:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
+</header>
+
+{% comment %}
+Section menu: a floating pill under the header. The outer glass box is the containing block for the phone
+categories panel (fixed), so the scrolling inner nav doesn't clip it.
+{% endcomment %}
+<div class="mx-auto max-w-screen-2xl px-3 sm:px-4 pt-4">
+  <div class="relative glass rounded-[1.75rem] md:rounded-full shadow-[0_8px_30px_rgb(49_46_129/0.10)] w-fit max-w-full mx-auto">
+    <nav class="flex items-center gap-1 overflow-x-auto md:overflow-visible no-scrollbar p-1.5 text-sm font-medium" aria-label="بخش‌های سایت">
+      <a href="{{ u_home }}" class="nav-link {% if request.path == u_home %}is-active{% endif %}">{% icon "home" %}صفحه اصلی</a>
+      <a href="{{ u_articles }}" class="nav-link {% if request.path == u_articles %}is-active{% endif %}">{% icon "article" %}مقالات</a>
+      <a href="{{ u_news }}" class="nav-link {% if request.path == u_news %}is-active{% endif %}">{% icon "news" %}اخبار</a>
+      <a href="{{ u_tutorials }}" class="nav-link {% if request.path == u_tutorials %}is-active{% endif %}">{% icon "tutorial" %}آموزش‌ها</a>
+      <span class="nav-sep" aria-hidden="true"></span>
+      <a href="{{ u_tools }}" class="nav-link {% if request.path == u_tools %}is-active{% endif %}">{% icon "ai_tool" %}ابزارهای AI</a>
+      <a href="{{ u_daily }}" class="nav-link {% if u_daily in request.path %}is-active{% endif %}">{% icon "sparkle" %}<span dir="ltr">AI Daily</span></a>
+      <span class="nav-sep" aria-hidden="true"></span>
+      <a href="{{ u_research }}" class="nav-link {% if request.path == u_research %}is-active{% endif %}">{% icon "research" %}مقالات علمی</a>
+      <div class="md:relative shrink-0" data-dropdown>
+        <button type="button" class="nav-link" data-dropdown-toggle aria-expanded="false">{% icon "grid" %}دسته‌بندی‌ها{% icon "chevron-down" "h-4 w-4 opacity-60" %}</button>
+        <div class="hidden fixed inset-x-3 top-full mt-2 md:absolute md:inset-x-auto md:top-full md:left-0 md:w-72 card p-2 shadow-xl grid grid-cols-2 md:grid-cols-1 gap-x-1 text-[13px] md:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
           {% for cat in nav_categories %}
           <a href="{{ cat.get_absolute_url }}" class="rounded-xl px-3 py-2 hover:bg-white/70 dark:hover:bg-slate-800/70">{{ cat.icon }} {{ cat.name }}</a>
           {% endfor %}
@@ -56,4 +64,4 @@
       </div>
     </nav>
   </div>
-</header>
+</div>

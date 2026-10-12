@@ -18,8 +18,11 @@
   .nf-tile { @apply flex flex-col items-center gap-2 rounded-2xl bg-white/5 ring-1 ring-white/15 px-3 py-4 text-sm font-semibold text-white text-center hover:bg-white/10 hover:-translate-y-0.5 transition; }
   .nf-icon { @apply grid place-items-center h-11 w-11 rounded-full bg-gradient-to-br from-brand-600/60 to-violet-600/60 ring-1 ring-white/20 text-xl; }
   .social { @apply grid place-items-center h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/15 text-slate-200 text-sm font-bold hover:bg-white/20 transition; }
-  .nav-link { @apply inline-flex shrink-0 items-center whitespace-nowrap px-3 py-2.5 border-b-2 border-transparent text-slate-600 dark:text-slate-300 hover:text-brand-700 dark:hover:text-white transition; }
-  .nav-link.is-active { @apply border-brand-600 text-brand-700 dark:text-white font-bold; }
+  .nav-link { @apply inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/10 hover:text-brand-700 dark:hover:text-white transition; }
+  .nav-link svg:first-child { @apply text-brand-600 dark:text-brand-500; }
+  .nav-link.is-active { @apply bg-brand-50 dark:bg-brand-600/25 text-brand-700 dark:text-white font-bold shadow-sm ring-1 ring-brand-100 dark:ring-brand-500/30; }
+  .cat-tile { @apply card snap-start shrink-0 w-28 sm:w-32 xl:w-36 min-h-[7.5rem] sm:min-h-[8.25rem] !rounded-[1.5rem] p-3 flex flex-col items-center justify-center gap-2.5 text-center text-[13px] sm:text-sm font-semibold text-slate-800 dark:text-slate-200 hover:-translate-y-0.5 hover:shadow-xl transition; }
+  .nav-sep { @apply hidden md:block h-6 w-px shrink-0 bg-slate-300/70 dark:bg-white/15; }
   .pill { @apply inline-flex items-center gap-1 rounded-full bg-gradient-to-l from-brand-600 to-violet-600 px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm; }
   .icon-btn { @apply grid place-items-center h-10 w-10 rounded-full glass hover:bg-white/80 dark:hover:bg-slate-800/80 transition; }
   .see-all { @apply inline-flex items-center gap-1 rounded-full glass px-3 py-1 text-xs font-medium text-brand-700 dark:text-brand-500 hover:bg-white/80 dark:hover:bg-slate-800/80; }

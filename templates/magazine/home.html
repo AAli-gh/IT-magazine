@@ -6,49 +6,49 @@
 
 {% if hero_slides %}
 {# ── Hero: rotating top stories + three more beside them ── #}
-<section class="grid gap-4 lg:grid-cols-[1fr_300px] mb-6">
-  <div class="relative card !rounded-[2rem] overflow-hidden min-h-[360px] sm:min-h-[420px] lg:min-h-[440px]" data-slider aria-roledescription="carousel" aria-label="مطالب برگزیده">
+<section class="grid gap-4 lg:gap-5 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_400px] mb-5">
+  <div class="relative card !rounded-[2rem] overflow-hidden min-h-[440px] sm:min-h-[460px] lg:min-h-[520px]" data-slider aria-roledescription="carousel" aria-label="مطالب برگزیده">
     {% for article in hero_slides %}
     <article class="absolute inset-0 {% if forloop.first %}is-active{% endif %}" data-slide aria-label="{{ forloop.counter|fa_digits }} از {{ hero_slides|length|fa_digits }}">
       {% if article.cover %}
-      <img src="{{ article.cover.url }}" {% if article.cover_srcset %}srcset="{{ article.cover_srcset }}" sizes="(min-width: 1024px) 66vw, 100vw"{% endif %}
+      <img src="{{ article.cover.url }}" {% if article.cover_srcset %}srcset="{{ article.cover_srcset }}" sizes="(min-width: 1024px) 70vw, 100vw"{% endif %}
            alt="" class="absolute inset-0 h-full w-full object-cover" {% if not forloop.first %}loading="lazy"{% endif %}>
       {% else %}
       <div class="absolute inset-0 bg-gradient-to-br from-brand-600 to-violet-700"></div>
       {% endif %}
-      <div class="absolute inset-0 bg-gradient-to-l from-slate-950/85 via-slate-950/45 to-slate-950/5"></div>
-      <div class="relative h-full flex flex-col justify-end sm:justify-center p-6 sm:p-10 max-w-xl text-white">
-        <span class="pill w-fit mb-4">{{ article.category.icon }} {{ article.category.name }}</span>
-        <h2 class="text-2xl sm:text-4xl font-black leading-[1.5] sm:leading-[1.45]">
+      <div class="absolute inset-0 bg-gradient-to-l from-slate-950/85 via-slate-950/50 to-slate-950/10"></div>
+      <div class="relative h-full flex flex-col justify-end sm:justify-center p-6 pb-24 sm:p-12 sm:pb-24 max-w-[46rem] text-white [&>*]:shrink-0">
+        <span class="pill w-fit mb-3 sm:mb-5 !text-xs !px-3.5 !py-1.5">{{ article.category.icon }} {{ article.category.name }}</span>
+        <h2 class="text-xl sm:text-4xl xl:text-[2.6rem] font-black leading-[1.5] sm:leading-[1.45]">
           <a href="{{ article.get_absolute_url }}" class="hover:underline decoration-2 underline-offset-8">{{ article.display_title }}</a>
         </h2>
-        {% if article.excerpt %}<p class="mt-3 text-sm sm:text-base text-white/85 leading-7 line-clamp-2">{{ article.excerpt }}</p>{% endif %}
-        <div class="mt-6 flex flex-wrap items-center gap-3">
-          <a href="{{ article.get_absolute_url }}" class="btn-primary !rounded-full !px-6 !py-2.5">مطالعه مقاله ←</a>
-          <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur ring-1 ring-white/30 px-4 py-2 text-sm">⏱ {{ article.reading_time|fa_digits }} دقیقه مطالعه</span>
+        {% if article.excerpt %}<p class="mt-3 sm:mt-4 text-sm sm:text-lg text-white/85 leading-7 sm:leading-8 line-clamp-2 sm:line-clamp-3">{{ article.excerpt }}</p>{% endif %}
+        <div class="mt-5 sm:mt-7 flex flex-wrap items-center gap-2 sm:gap-3">
+          <a href="{{ article.get_absolute_url }}" class="btn-primary !rounded-full !px-5 !py-2.5 sm:!px-7 sm:!py-3 sm:!text-base">مطالعه مقاله ←</a>
+          <span class="inline-flex items-center gap-2 rounded-full bg-slate-950/40 backdrop-blur ring-1 ring-white/25 px-4 py-2.5 sm:px-5 sm:py-3 text-sm">{% icon "clock" "h-5 w-5" %}{{ article.reading_time|fa_digits }} دقیقه مطالعه</span>
         </div>
       </div>
     </article>
     {% endfor %}
     {% if hero_slides|length > 1 %}
-    <div class="absolute top-4 left-4 sm:top-auto sm:bottom-5 sm:left-5 flex items-center gap-2 z-10">
-      <button type="button" class="grid place-items-center h-9 w-9 rounded-full bg-white/20 backdrop-blur ring-1 ring-white/40 text-white hover:bg-white/35" data-next aria-label="بعدی">‹</button>
-      <div class="flex items-center gap-1.5 px-2">
+    <div class="absolute bottom-5 left-5 sm:bottom-7 sm:left-7 flex items-center gap-3 z-10">
+      <button type="button" class="grid place-items-center h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-white/15 backdrop-blur ring-1 ring-white/40 text-white hover:bg-white/30 transition" data-prev aria-label="قبلی">{% icon "chevron-right" %}</button>
+      <div class="flex items-center gap-1.5">
         {% for article in hero_slides %}<button type="button" class="h-2 w-2 rounded-full bg-white/50 transition-all {% if forloop.first %}is-active{% endif %}" data-dot aria-label="اسلاید {{ forloop.counter|fa_digits }}"></button>{% endfor %}
       </div>
-      <button type="button" class="grid place-items-center h-9 w-9 rounded-full bg-white/20 backdrop-blur ring-1 ring-white/40 text-white hover:bg-white/35" data-prev aria-label="قبلی">›</button>
+      <button type="button" class="grid place-items-center h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-white/15 backdrop-blur ring-1 ring-white/40 text-white hover:bg-white/30 transition" data-next aria-label="بعدی">{% icon "chevron-left" %}</button>
     </div>
     {% endif %}
   </div>
 
-  <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+  <div class="grid gap-4 lg:gap-5 sm:grid-cols-3 lg:grid-cols-1 lg:grid-rows-3">
     {% for article in hero_side %}
-    <a href="{{ article.get_absolute_url }}" class="group card p-3 flex items-center gap-3 hover:-translate-y-0.5 hover:shadow-xl transition">
+    <a href="{{ article.get_absolute_url }}" class="group card !rounded-[1.75rem] p-4 flex items-center gap-4 hover:-translate-y-0.5 hover:shadow-xl transition">
       <div class="flex-1 min-w-0">
-        <span class="pill mb-2">{{ article.category.name }}</span>
-        <h3 class="font-bold text-sm leading-6 line-clamp-2 text-slate-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-500">{{ article.display_title }}</h3>
+        <span class="pill mb-2.5 !text-xs !px-3 !py-1">{{ article.category.name }}</span>
+        <h3 class="font-extrabold text-[15px] xl:text-base leading-7 line-clamp-2 text-slate-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-500">{{ article.display_title }}</h3>
       </div>
-      <div class="w-24 h-20 shrink-0 rounded-2xl overflow-hidden">{% include "partials/cover.html" %}</div>
+      <div class="w-24 h-20 xl:w-32 xl:h-[6.5rem] shrink-0 rounded-2xl overflow-hidden shadow-md">{% include "partials/cover.html" %}</div>
     </a>
     {% endfor %}
   </div>
@@ -61,13 +61,13 @@
 {% endif %}
 
 {# ── Category shortcuts ── #}
-<nav id="categories" class="flex gap-3 overflow-x-auto no-scrollbar snap-row pb-2 mb-6 scroll-mt-32" aria-label="دسته‌بندی‌ها">
-  <a href="{% url 'magazine:search' %}?sort=new" class="snap-start shrink-0 w-24 sm:w-28 card !rounded-2xl p-3 flex flex-col items-center gap-2 text-center !bg-gradient-to-br !from-brand-600 !to-violet-600 text-white !ring-0">
-    <span class="text-2xl">✦</span><span class="text-xs font-semibold">همه</span>
+<nav id="categories" class="flex gap-3 lg:gap-4 overflow-x-auto no-scrollbar snap-row pb-2 mb-6 scroll-mt-32" aria-label="دسته‌بندی‌ها">
+  <a href="{% url 'magazine:search' %}?sort=new" class="cat-tile !bg-gradient-to-br !from-brand-600 !to-violet-600 !text-white !ring-0 shadow-lg shadow-brand-600/25">
+    <span class="text-3xl">✦</span><span class="font-bold">همه</span>
   </a>
   {% for cat in nav_categories %}
-  <a href="{{ cat.get_absolute_url }}" class="snap-start shrink-0 w-24 sm:w-28 card !rounded-2xl p-3 flex flex-col items-center gap-2 text-center hover:-translate-y-0.5 hover:shadow-xl transition">
-    <span class="text-2xl">{{ cat.icon|default:"📁" }}</span><span class="text-xs font-semibold leading-5 line-clamp-2">{{ cat.name }}</span>
+  <a href="{{ cat.get_absolute_url }}" class="cat-tile">
+    <span class="text-3xl">{{ cat.icon|default:"📁" }}</span><span class="leading-6 line-clamp-2">{{ cat.name }}</span>
   </a>
   {% endfor %}
 </nav>

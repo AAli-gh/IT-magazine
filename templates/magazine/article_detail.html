@@ -26,6 +26,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="mx-auto max-w-7xl">{# keep lines a comfortable reading length on wide screens #}
 <div class="fixed top-0 inset-x-0 h-1 z-50"><div id="reading-progress" class="h-full w-0 bg-brand-600 transition-[width]"></div></div>
 
 <nav class="text-sm text-slate-500 mb-4" aria-label="breadcrumb">
@@ -174,5 +175,6 @@
       {% banner_slot "sidebar" %}
     </div>
   </aside>
+</div>
 </div>
 {% endblock %}
