@@ -36,13 +36,13 @@
     </nav>
   </div>
 
-</header>
 
 {% comment %}
-Section menu: a floating pill under the header. The outer glass box is the containing block for the phone
-categories panel (fixed), so the scrolling inner nav doesn't clip it.
+Section menu: a floating pill in the sticky header, so it stays on screen and its categories panel sits above
+the page. The outer glass box is the containing block for the phone panel (fixed), so the scrolling inner nav
+doesn't clip it.
 {% endcomment %}
-<div class="mx-auto max-w-screen-2xl px-3 sm:px-4 pt-4">
+<div class="mx-auto max-w-screen-2xl px-3 sm:px-4 pb-2.5 md:pb-3">
   <div class="relative glass rounded-[1.75rem] md:rounded-full shadow-[0_8px_30px_rgb(49_46_129/0.10)] w-fit max-w-full mx-auto">
     <nav class="flex items-center gap-1 overflow-x-auto md:overflow-visible no-scrollbar p-1.5 text-sm font-medium" aria-label="بخش‌های سایت">
       <a href="{{ u_home }}" class="nav-link {% if request.path == u_home %}is-active{% endif %}">{% icon "home" %}صفحه اصلی</a>
@@ -56,7 +56,7 @@ categories panel (fixed), so the scrolling inner nav doesn't clip it.
       <a href="{{ u_research }}" class="nav-link {% if request.path == u_research %}is-active{% endif %}">{% icon "research" %}مقالات علمی</a>
       <div class="md:relative shrink-0" data-dropdown>
         <button type="button" class="nav-link" data-dropdown-toggle aria-expanded="false">{% icon "grid" %}دسته‌بندی‌ها{% icon "chevron-down" "h-4 w-4 opacity-60" %}</button>
-        <div class="hidden fixed inset-x-3 top-full mt-2 md:absolute md:inset-x-auto md:top-full md:left-0 md:w-72 card p-2 shadow-xl grid grid-cols-2 md:grid-cols-1 gap-x-1 text-[13px] md:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
+        <div class="hidden fixed inset-x-3 top-full mt-2 md:absolute md:inset-x-auto md:top-full md:left-0 md:w-72 card !bg-white dark:!bg-slate-900 !backdrop-blur-none p-2 shadow-xl grid grid-cols-2 md:grid-cols-1 gap-x-1 text-[13px] md:text-sm max-h-[70vh] overflow-y-auto z-50" data-dropdown-menu>
           {% for cat in nav_categories %}
           <a href="{{ cat.get_absolute_url }}" class="rounded-xl px-3 py-2 hover:bg-white/70 dark:hover:bg-slate-800/70">{{ cat.icon }} {{ cat.name }}</a>
           {% endfor %}
@@ -65,3 +65,4 @@ categories panel (fixed), so the scrolling inner nav doesn't clip it.
     </nav>
   </div>
 </div>
+</header>
