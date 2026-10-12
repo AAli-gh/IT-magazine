@@ -1519,3 +1519,14 @@ from .showcase_more import MORE_ARTICLES, MORE_PHOTOS  # noqa: E402
 
 ARTICLES = MORE_ARTICLES + ARTICLES
 PHOTOS = {**PHOTOS, **MORE_PHOTOS}
+from .showcase_fresh import FRESH_ARTICLES  # noqa: E402
+from .showcase_fresh_b import FRESH_ARTICLES_B  # noqa: E402
+from .showcase_fresh_tut import FRESH_TUTORIALS  # noqa: E402
+from .showcase_fresh_tut2 import FRESH_TUTORIALS_B  # noqa: E402
+
+# Alternate articles and tutorials so both show up on the home page.
+_fresh_articles = FRESH_ARTICLES + FRESH_ARTICLES_B
+_fresh_tutorials = FRESH_TUTORIALS + FRESH_TUTORIALS_B
+FRESH = [item for pair in zip(_fresh_articles, _fresh_tutorials) for item in pair]
+PHOTOS = {**PHOTOS, **{item["title"]: item.pop("photo") for item in FRESH}}
+ARTICLES = FRESH + ARTICLES
